@@ -43,20 +43,30 @@ void set_noblock_mode()
     fcntl(0, F_SETFL, flag);
 }
 
-void reset_echo_mode()
-{
+void reset_block_mode() {
     struct termios term;
-    if (tcgetattr(STDIN_FILENO, &term) == -1)
-    {
+    int flag;
+
+    // 恢复终端设置
+    if (tcgetattr(STDIN_FILENO, &term) == -1) {
         perror("tcgetattr");
         exit(EXIT_FAILURE);
     }
-
-    // 恢复回显
-    term.c_lflag |= ECHO | ICANON;
-    if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &term) == -1)
-    {
+    term.c_lflag |= (ICANON | ECHO); // 重新开启规范模式和回显
+    if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &term) == -1) {
         perror("tcsetattr");
+        exit(EXIT_FAILURE);
+    }
+
+    // 恢复标准输入的阻塞模式
+    flag = fcntl(STDIN_FILENO, F_GETFL);
+    if (flag == -1) {
+        perror("fcntl F_GETFL");
+        exit(EXIT_FAILURE);
+    }
+    flag &= ~O_NONBLOCK; // 清除非阻塞标志
+    if (fcntl(STDIN_FILENO, F_SETFL, flag) == -1) {
+        perror("fcntl F_SETFL");
         exit(EXIT_FAILURE);
     }
 }
@@ -86,9 +96,10 @@ void move_snake(LLIST *snake_body, int move_x , int move_y)
 
     if (!check_point(snake_body, check_node))
     {
-        printf("游戏结束，得分为%d\n", snake_body->count-lenth);
-        reset_echo_mode();
-        exit(1);
+        //printf("游戏结束，得分为%d\n", snake_body->count-lenth);
+        //reset_echo_mode();
+        game_continue_flag = 0;
+        return;
     }
 
 
@@ -105,7 +116,6 @@ void move_snake(LLIST *snake_body, int move_x , int move_y)
         newtag = get_tag();
         tagx = newtag.x;
         tagy = newtag.y;
-        printf("%d %d\n",tagx,tagy);
 
         save_node->x = newtag.x;
         save_node->y = newtag.y;

@@ -10,4 +10,6 @@ int speed;
 int tagx;
 int tagy;
 
+int game_continue_flag;
+
 #endif

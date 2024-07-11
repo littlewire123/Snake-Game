@@ -29,8 +29,6 @@ void snake_insert_body(LLIST *snake_body, snake_node *node)
 
     llist_append(snake_body, node);
     return ;
-ERR1:
-    return;
 }
 
 NODE *snake_find_body(const LLIST *snake_body , snake_node *node , llist_cmp_t cmp)

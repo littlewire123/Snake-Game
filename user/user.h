@@ -2,8 +2,8 @@
 #define __USER_H__
 
 #include "../llist/llist.h"
-#include "../map/map.h"
 #include "static.h"
+#include "../classic_mode/classic_mode.h"
 
 
 #endif
