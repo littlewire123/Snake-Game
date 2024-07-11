@@ -5,11 +5,7 @@ CC = gcc
 CFLAGS = -Wall -g
 
 # 定义源文件
-<<<<<<< HEAD
-SRCS = main.c ../llist/llist.c ../map/map.c ../Snake/Snake.c ../classic_mode/classic_mode.c
-=======
-SRCS = main.c ../llist/llist.c ../map/map.c ../Snake/Snake.c ../Challenge_Mode/challenge_mode.c
->>>>>>> jyg
+SRCS = main.c ../llist/llist.c ../map/map.c ../Snake/Snake.c ../classic_mode/classic_mode.c ../Challenge_Mode/challenge_mode.c
 
 # 定义可执行文件名
 TARGET = Snake
