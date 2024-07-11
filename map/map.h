@@ -2,6 +2,7 @@
 #define __MAP_H__
 
 #include "../Snake/Snake.h"
+#include "../user/static.h"
 
 
 void init_map();//初始化地图
@@ -13,5 +14,7 @@ void print(const LLIST *snake_body);
 int cmp_node(const void *d1 , const void *d2);
 void move_snake(LLIST *snake_body, int move_x , int move_y);
 
+void snake_insert_obstacle(LLIST *snake_obstacle , snake_node *obstacle);
+ 
 
 #endif

@@ -1,5 +1,4 @@
 #include "./map.h"
-#include "../user/static.h"
 
 void print_snake(snake_node *node)
 {
@@ -105,7 +104,6 @@ void move_snake(LLIST *snake_body, int move_x , int move_y)
         newtag = get_tag();
         tagx = newtag.x;
         tagy = newtag.y;
-        printf("%d %d\n",tagx,tagy);
 
         save_node->x = newtag.x;
         save_node->y = newtag.y;
@@ -115,7 +113,6 @@ void move_snake(LLIST *snake_body, int move_x , int move_y)
             newtag = get_tag();
             tagx = newtag.x;
             tagy = newtag.y;
-            printf("%d %d\n",tagx,tagy);
 
             save_node->x = newtag.x;
             save_node->y = newtag.y;
@@ -185,5 +182,26 @@ void print(const LLIST *snake_body)
     }
 
     printf("向上：W，向下：S，向左：A，向右：D\n");
+}
+
+void init_map()
+{
+    obstacle_num = 10;
+    int num = 0;
+    LLIST * snake_obstacle = NULL;
+    snake_obstacle = llist_creat(sizeof(snake_node));
+    ERRP(NULL == snake_obstacle , snake_obstacle malloc , goto ERR1);
+
+    snake_node obstacle;
+
+    while(num < 10)
+    {
+        obstacle = get_tag();
+
+        
+    }
+    
+ERR1: 
+    return ;
 }
 
