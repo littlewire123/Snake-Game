@@ -13,6 +13,7 @@ int main()
         switch (mod)
         {
         case 1:
+            mod = 0;
             start_classic_game();
             break;
         

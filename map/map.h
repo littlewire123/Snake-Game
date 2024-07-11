@@ -7,7 +7,7 @@
 
 void init_map();//初始化地图
 void set_noblock_mode();// 函数用来设置输入不阻塞和禁用缓冲区
-void reset_echo_mode();// 函数用来恢复终端的默认模式
+void reset_block_mode();// 函数用来恢复终端的默认模式
 int check_point(LLIST *snake_body, snake_node *node);
 snake_node get_tag();
 void print(const LLIST *snake_body);

@@ -36,7 +36,8 @@ void start_classic_game()
 
         if(input == 'q' || input == 'Q')
         {
-            break;
+            end_classic_game(snake_body);
+            return;
         }
         else if (input == 'w' || input == 'W')
         {
@@ -71,7 +72,7 @@ void start_classic_game()
 
 void end_classic_game(LLIST *snake_body)
 {
-    reset_echo_mode();
+    reset_block_mode();
     game_continue_flag = 0;
     printf("游戏结束，得分为%d\n", snake_body->count-lenth);
     return ;
