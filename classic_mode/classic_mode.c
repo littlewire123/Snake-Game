@@ -24,8 +24,10 @@ void start_classic_game()
     }
 
     game_continue_flag = 1;
+    printf("classic mode start\n");
+    set_noblock_mode();
 
-    while (1)
+    while (game_continue_flag)
     {
         
         system("clear");
@@ -34,11 +36,9 @@ void start_classic_game()
 
         if(input == 'q' || input == 'Q')
         {
-            end_classic_game(snake_body);
             break;
         }
-
-        if (input == 'w' || input == 'W')
+        else if (input == 'w' || input == 'W')
         {
             move_x = -1;
             move_y = 0;
@@ -62,14 +62,17 @@ void start_classic_game()
         move_snake(snake_body, move_x, move_y);
         print(snake_body);
 
-        printf("%d\n", game_continue_flag);
         usleep(speed);
     }
+
+    end_classic_game(snake_body);
+    return ;
 }
 
 void end_classic_game(LLIST *snake_body)
 {
-    printf("游戏结束，得分为%d\n", snake_body->count-lenth);
     reset_echo_mode();
+    game_continue_flag = 0;
+    printf("游戏结束，得分为%d\n", snake_body->count-lenth);
     return ;
 }

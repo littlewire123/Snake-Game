@@ -86,7 +86,7 @@ void move_snake(LLIST *snake_body, int move_x , int move_y)
 
     if (!check_point(snake_body, check_node))
     {
-        printf("游戏结束，得分为%d\n", snake_body->count-lenth);
+        //printf("游戏结束，得分为%d\n", snake_body->count-lenth);
         //reset_echo_mode();
         game_continue_flag = 0;
         return;
@@ -106,7 +106,6 @@ void move_snake(LLIST *snake_body, int move_x , int move_y)
         newtag = get_tag();
         tagx = newtag.x;
         tagy = newtag.y;
-        printf("%d %d\n",tagx,tagy);
 
         save_node->x = newtag.x;
         save_node->y = newtag.y;
