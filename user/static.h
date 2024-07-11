@@ -12,4 +12,9 @@ int tagy;
 
 int game_continue_flag;
 
+<<<<<<< HEAD
+=======
+int obstacle_num;
+
+>>>>>>> jyg
 #endif
