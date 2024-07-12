@@ -19,6 +19,7 @@ LLIST *snake_init_body(LLIST* snake_body_init, int lenth);
 void snake_insert_body(LLIST* snake_body_insert, snake_node *node);
 NODE *snake_find_body(LLIST* snake_body_find,const snake_node *node , llist_cmp_t cmp); //查找点是否在蛇的身体内
 NODE *snake_find_obstacle(LLIST* snake_obstacle_find,const  snake_node *node , llist_cmp_t cmp); //查找点是否在障碍物上
+NODE *snake_find_tag(LLIST* snake_tag_find , const snake_node *node , llist_cmp_t cmp); //查找点是否在食物上
 
 
 #endif

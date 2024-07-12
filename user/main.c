@@ -1,13 +1,17 @@
 #include "user.h"
 
+void ls(const void *data)
+{
+    printf("%d %d\n", ((snake_node *)data)->x , ((snake_node *)data)->y);
+}
+
 int main()
 {
     while(1)
     {
-        snake_body_challenge = snake_init_body(snake_body_challenge , LENGTH);
-        snake_obstacle = init_map(snake_obstacle);
         printf("1 : class_mode \n");
         printf("2 : challenge_mode \n");
+        printf("3 : power_up_mode \n");
         printf("5 : exit game \n");
         int mod;
         printf("input your mod :");
@@ -40,10 +44,11 @@ int main()
             }
             break;
         case 2:
-            if((snake_body_challenge = init_challenge_game(snake_body_challenge , &snake_obstacle)) == NULL)
+            if((snake_body_challenge = init_challenge_game(snake_body_challenge , &snake_obstacle_challenge)) == NULL)
             {
                 snake_body_challenge = snake_init_body(snake_body_challenge , LENGTH);
-                challenge_mode_start(snake_body_challenge , snake_obstacle);
+                snake_obstacle_challenge = init_map(snake_body_challenge,snake_obstacle_challenge);
+                challenge_mode_start(snake_body_challenge , snake_obstacle_challenge);
             }
             else
             {
@@ -54,21 +59,25 @@ int main()
                 if(mod == 1)
                 {
                     snake_body_challenge = snake_init_body(snake_body_challenge , LENGTH);
-                    challenge_mode_start(snake_body_challenge , snake_obstacle);
+                    snake_obstacle_challenge = init_map(snake_body_challenge,snake_obstacle_challenge);
+                    challenge_mode_start(snake_body_challenge , snake_obstacle_challenge);
                 }
                 else
                 {
-                    continue_challenge_game(snake_body_challenge,snake_obstacle);
+                    continue_challenge_game(snake_body_challenge,snake_obstacle_challenge);
                 }
             }
             break;
+        case 3:
+            snake_body_power = snake_init_body(snake_body_power , LENGTH);
+            snake_obstacle_power = init_map(snake_body_power ,snake_obstacle_power);
+            snake_tag_power = init_tag(snake_body_power , snake_tag_power , snake_obstacle_power);
+            power_mode_start(snake_body_power , snake_obstacle_power , snake_tag_power);
         default:
             break;
         }
     }
-    llist_destroy(&snake_body_classic);
-    llist_destroy(&snake_body_challenge);
-    llist_destroy(&snake_obstacle);
-    
+    snake_destroy();
+
     return 0;
 }

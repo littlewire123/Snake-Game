@@ -22,9 +22,16 @@ typedef struct static_t{
 }STATIC;
 STATIC STATIC_t;
 
-LLIST * snake_obstacle;
-LLIST * snake_body_classic;
-LLIST * snake_body_challenge;
 int obstacle_num;
+int tag_num;
+
+LLIST * snake_obstacle_challenge; //挑战模式障碍物
+LLIST * snake_obstacle_power; //道具模式障碍物
+
+LLIST * snake_body_classic; //经典模式身体
+LLIST * snake_body_challenge;//挑战模式身体
+LLIST * snake_body_power;//道具模式身体
+
+LLIST * snake_tag_power;//道具模式食物
 
 #endif

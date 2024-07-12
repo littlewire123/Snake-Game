@@ -43,7 +43,6 @@ NODE *snake_find_body(LLIST* snake_body_find,const snake_node *node , llist_cmp_
 
 NODE *snake_find_obstacle(LLIST* snake_obstacle_find,const  snake_node *node , llist_cmp_t cmp)
 {
-    
     NODE *curret = snake_obstacle_find->head.next;
 
     while(curret != &snake_obstacle_find->head)
@@ -51,6 +50,21 @@ NODE *snake_find_obstacle(LLIST* snake_obstacle_find,const  snake_node *node , l
         if(cmp(curret->data , node) == 0)
         {   
                  
+            return curret;
+        }
+        curret = curret->next;
+    }
+    return NULL;
+}
+
+NODE *snake_find_tag(LLIST* snake_tag_find , const snake_node *node , llist_cmp_t cmp)
+{
+    NODE *curret = snake_tag_find->head.next;
+
+    while(curret != &snake_tag_find->head)
+    {
+        if(cmp(curret->data , node) == 0)
+        {
             return curret;
         }
         curret = curret->next;
