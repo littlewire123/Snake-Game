@@ -7,6 +7,7 @@ void ls(const void *data)
 
 int main()
 {
+    srand(time(NULL));
     while(1)
     {
         printf("1 : class_mode \n");
@@ -69,10 +70,32 @@ int main()
             }
             break;
         case 3:
-            snake_body_power = snake_init_body(snake_body_power , LENGTH);
-            snake_obstacle_power = init_map(snake_body_power ,snake_obstacle_power);
-            snake_tag_power = init_tag(snake_body_power , snake_tag_power , snake_obstacle_power);
-            power_mode_start(snake_body_power , snake_obstacle_power , snake_tag_power);
+            if((snake_body_power = init_power_game(snake_body_power,&snake_obstacle_power,&snake_tag_power)) == NULL)
+            {
+                snake_body_power = snake_init_body(snake_body_power , LENGTH);
+                snake_obstacle_power = init_map(snake_body_power ,snake_obstacle_power);
+                snake_tag_power = init_tag(snake_body_power , snake_tag_power , snake_obstacle_power);
+                power_mode_start(snake_body_power , snake_obstacle_power , snake_tag_power);
+            }
+            else
+            {
+                system("clear");
+                printf("1 : New game\n");
+                printf("2 : Continue  game\n");
+                scanf("%d" , &mod);
+                if(mod == 1)
+                {
+                    snake_body_power = snake_init_body(snake_body_power , LENGTH);
+                    snake_obstacle_power = init_map(snake_body_power ,snake_obstacle_power);
+                    snake_tag_power = init_tag(snake_body_power , snake_tag_power , snake_obstacle_power);
+                    power_mode_start(snake_body_power , snake_obstacle_power , snake_tag_power);
+                }
+                else
+                {
+                    continue_power_game(snake_body_power,snake_obstacle_power,snake_tag_power);
+                }
+            }
+            
         default:
             break;
         }

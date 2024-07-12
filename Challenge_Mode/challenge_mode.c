@@ -23,7 +23,7 @@ void challenge_mode_start(LLIST *snake_body_start, LLIST *snake_obstacle_start)
 
     STATIC_t.move_x = 0;
     STATIC_t.move_y = 1;
-    STATIC_t.speed = 300000;
+    STATIC_t.speed_ture = 300000;
 
     srand(time(NULL));
 
@@ -49,7 +49,7 @@ void challenge_mode_start(LLIST *snake_body_start, LLIST *snake_obstacle_start)
 
         if (input == 'q' || input == 'Q')
         {
-            challenge_game_stroe(snake_body_start , snake_obstacle_start);
+            challenge_game_stroe(snake_body_start, snake_obstacle_start);
             timeout_challenge_game(snake_body_start);
             return;
         }
@@ -76,18 +76,18 @@ void challenge_mode_start(LLIST *snake_body_start, LLIST *snake_obstacle_start)
         }
         challenge_move_snake(snake_body_start, snake_obstacle_start);
         print_challenge(snake_body_start, snake_obstacle_start);
-        usleep(STATIC_t.speed);
+        usleep(STATIC_t.speed_ture);
     }
-    if(STATIC_t.game_over_flag == 0)
+    if (STATIC_t.game_over_flag == 0)
     {
         challene_mode_end(snake_body_start);
     }
-    return ;
+    return;
 }
 
 void continue_challenge_game(LLIST *snake_body_start, LLIST *snake_obstacle_start)
 {
-    set_noblock_mode(); //函数用来设置输入不阻塞和禁用缓冲区
+    set_noblock_mode(); // 函数用来设置输入不阻塞和禁用缓冲区
 
     char input;
     srand(time(NULL));
@@ -103,7 +103,7 @@ void continue_challenge_game(LLIST *snake_body_start, LLIST *snake_obstacle_star
 
         if (input == 'q' || input == 'Q')
         {
-            challenge_game_stroe(snake_body_start , snake_obstacle_start);
+            challenge_game_stroe(snake_body_start, snake_obstacle_start);
             timeout_challenge_game(snake_body_start);
             return;
         }
@@ -130,35 +130,35 @@ void continue_challenge_game(LLIST *snake_body_start, LLIST *snake_obstacle_star
         }
         challenge_move_snake(snake_body_start, snake_obstacle_start);
         print_challenge(snake_body_start, snake_obstacle_start);
-        usleep(STATIC_t.speed);
+        usleep(STATIC_t.speed_ture);
     }
-    if(STATIC_t.game_over_flag == 0)
+    if (STATIC_t.game_over_flag == 0)
     {
         challene_mode_end(snake_body_start);
     }
-    return ;
+    return;
 }
 
 void challene_mode_end(LLIST *snake_body_end)
 {
     reset_block_mode();
     FILE *fp = NULL;
-    fp = fopen(PATH_CHALLENGE , "w");
-    ERRP(NULL == fp , fopen , goto ERR1);
+    fp = fopen(PATH_CHALLENGE, "w");
+    ERRP(NULL == fp, fopen, goto ERR1);
 
     printf("游戏结束，得分为%d\n", snake_body_end->count - LENGTH);
 
     fclose(fp);
     return;
-ERR1: 
-    return ;
+ERR1:
+    return;
 }
 
 void timeout_challenge_game(LLIST *snake_body_timeout)
 {
     reset_block_mode();
     STATIC_t.game_continue_flag = 0;
-    return ;
+    return;
 }
 
 void challenge_move_snake(LLIST *snake_body_move, LLIST *snake_obstacle_move)
@@ -198,9 +198,9 @@ void challenge_move_snake(LLIST *snake_body_move, LLIST *snake_obstacle_move)
             STATIC_t.tagy = newtag.y;
         }
 
-        if (STATIC_t.speed != 150000)
+        if (STATIC_t.speed_ture != 100000)
         {
-            STATIC_t.speed -= CHANGE_SPEED;
+            STATIC_t.speed_ture -= CHANGE_SPEED;
         }
         free(check_node);
         return;
@@ -299,8 +299,8 @@ LLIST *challenge_game_load(LLIST **snake_obstacle)
         tail = (void *)malloc(snake_body_challenge_load->size);
         ERRP(tail == NULL, tail malloc, goto ERR6);
 
-        ERRP(fread(tail , snake_body_challenge_load->size , 1, fp) != 1 , fread , goto ERR6);
-        snake_insert_body(snake_body_challenge_load , tail);
+        ERRP(fread(tail, snake_body_challenge_load->size, 1, fp) != 1, fread, goto ERR6);
+        snake_insert_body(snake_body_challenge_load, tail);
 
         snake_body_challenge_load->count--;
         free(tail);

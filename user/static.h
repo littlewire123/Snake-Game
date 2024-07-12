@@ -13,7 +13,8 @@
 
 typedef struct static_t{
     int lenth;
-    int speed;
+    int speed_ture;
+    int speed_false;
     int tagx;
     int tagy;
     int game_continue_flag;
@@ -25,6 +26,8 @@ STATIC STATIC_t;
 
 int obstacle_num;
 int tag_num;
+int power_mod_count;
+int lock_power;
 
 LLIST * snake_obstacle_challenge; //挑战模式障碍物
 LLIST * snake_obstacle_power; //道具模式障碍物
