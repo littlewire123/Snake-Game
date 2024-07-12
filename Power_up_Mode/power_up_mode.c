@@ -151,7 +151,7 @@ void timeout_power_game(LLIST *snake_body_timeout)
 
 void power_move_snake(LLIST *snake_body_move, LLIST *snake_obstacle_move, LLIST *snake_tag_move)
 {
-    if(power_mod_count != 0)
+    if (power_mod_count != 0)
     {
         power_mod_count--;
     }
@@ -196,13 +196,13 @@ void power_move_snake(LLIST *snake_body_move, LLIST *snake_obstacle_move, LLIST 
             STATIC_t.speed_false -= CHANGE_SPEED;
             STATIC_t.speed_ture = STATIC_t.speed_false;
         }
-        else if(STATIC_t.speed_false == 150000 && lock_power)
+        else if (STATIC_t.speed_false == 150000 && lock_power)
         {
             STATIC_t.speed_ture = STATIC_t.speed_false;
         }
         free(check_node);
 
-        snake_power_mod(snake_body_move, snake_obstacle_move,snake_tag_move,check_node);
+        snake_power_mod(snake_body_move, snake_obstacle_move, snake_tag_move, check_node);
         return;
     }
 
@@ -221,47 +221,47 @@ ERR1:
     return;
 }
 
-void snake_power_mod(LLIST *snake_power_mod,LLIST *snake_obstacle_mod , LLIST *snake_tag_mod , snake_node *check_node)
+void snake_power_mod(LLIST *snake_power_mod, LLIST *snake_obstacle_mod, LLIST *snake_tag_mod, snake_node *check_node)
 {
-    int num;
+    int num = 0;
 
-    num = rand() % 100;
+    //num = rand() % 100;
 
-    if (num > 0 && num < 10) //加速
+    if (num > 0 && num < 10) // 加速
     {
         power_mod_count = 50;
         STATIC_t.speed_ture = 100000;
         lock_power = 0;
     }
-    else if(num >= 10 && num <20)//减速
+    else if (num >= 10 && num < 20) // 减速
     {
         power_mod_count = 10;
         STATIC_t.speed_ture = 400000;
         lock_power = 0;
     }
-    else if(num >= 20 && num < 30)//增加长度
+    else if (num == 0) // 增加长度
     {
-        if(snake_power_mod->count < 500)
+        if (snake_power_mod->count < 500)
         {
-
+            snake_add_mod(snake_power_mod);
         }
         else
         {
-            return ;
+            return;
         }
     }
-    else if(num >=30 && num < 40)//减小长度
+    else if (num >= 30 && num < 40) // 减小长度
     {
-        if(snake_power_mod->count > 3)
+        if (snake_power_mod->count > 3)
         {
             snake_del_mod(snake_power_mod);
         }
         else
         {
-            return ;
+            return;
         }
     }
-    else if(num >= 40 && num < 50)//传送
+    else if (num >= 40 && num < 50) // 传送
     {
         snake_node newtag;
         newtag = get_tag();
@@ -269,27 +269,43 @@ void snake_power_mod(LLIST *snake_power_mod,LLIST *snake_obstacle_mod , LLIST *s
         {
             newtag = get_tag();
         }
-        snake_insert_body(snake_power_mod , &newtag);
+        snake_insert_body(snake_power_mod, &newtag);
     }
     else
     {
         return;
     }
-    return ;
+    return;
 }
 
-void snake_del_mod(LLIST* snake_power_mod)
+void snake_del_mod(LLIST *snake_power_mod)
 {
-    NODE * tail = NULL;
+    NODE *tail = NULL;
     int num = 0;
-    while(num < 3)
+    while (num < 3)
     {
         tail = snake_power_mod->head.prev;
         tail->prev->next = tail->next;
         tail->next->prev = tail->prev;
         free(tail->data);
-        free(tail);  
+        free(tail);
         snake_power_mod->count--;
+        num++;
+    }
+    return;
+}
+
+void snake_add_mod(LLIST *snake_power_mod)
+{
+    NODE *tail = NULL;
+    snake_node tag_mod;
+    int num = 0;
+    while (num < 3)
+    {
+        tail = snake_power_mod->head.prev;
+        tag_mod.x = ((snake_node *)tail->data)->x + STATIC_t.move_x;
+        tag_mod.y = ((snake_node *)tail->data)->y + STATIC_t.move_y;
+        snake_insert_body(snake_power_mod , &tag_mod);
         num++;
     }
     return ;

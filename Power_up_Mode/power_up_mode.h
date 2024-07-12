@@ -15,6 +15,7 @@ LLIST* power_game_load(LLIST **snake_obstacle_cpower , LLIST **snake_tag_power);
 void snake_del_tag(LLIST* snake_tag_move,snake_node* newtag);
 void snake_power_mod(LLIST *snake_power_mod,LLIST *snake_obstacle_mod , LLIST *snake_tag_mod , snake_node *check_node);
 void snake_del_mod(LLIST* snake_power_mod);
+void snake_add_mod(LLIST* snake_power_mod);
 
 
 
