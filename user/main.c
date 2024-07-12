@@ -1,6 +1,5 @@
 #include "user.h"
 
-
 int main()
 {
     while(1)
@@ -41,13 +40,31 @@ int main()
             }
             break;
         case 2:
-            challenge_mode_start(snake_body_challenge , snake_obstacle);
+            if((snake_body_challenge = init_challenge_game(snake_body_challenge , &snake_obstacle)) == NULL)
+            {
+                snake_body_challenge = snake_init_body(snake_body_challenge , LENGTH);
+                challenge_mode_start(snake_body_challenge , snake_obstacle);
+            }
+            else
+            {
+                system("clear");
+                printf("1 : New game\n");
+                printf("2 : Continue  game\n");
+                scanf("%d" , &mod);
+                if(mod == 1)
+                {
+                    snake_body_challenge = snake_init_body(snake_body_challenge , LENGTH);
+                    challenge_mode_start(snake_body_challenge , snake_obstacle);
+                }
+                else
+                {
+                    continue_challenge_game(snake_body_challenge,snake_obstacle);
+                }
+            }
             break;
         default:
             break;
         }
-
-
     }
     llist_destroy(&snake_body_classic);
     llist_destroy(&snake_body_challenge);

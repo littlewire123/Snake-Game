@@ -1,8 +1,8 @@
 #ifndef __STATIC_H__
 #define __STATIC_H__
 
-#define M 25
-#define N 50
+#define M 30
+#define N 100   
 #define CHANGE_SPEED 5000
 #define LENGTH 3
 #define PATH_CLASSIC "../user/classic_game.db"
@@ -16,6 +16,7 @@ typedef struct static_t{
     int tagx;
     int tagy;
     int game_continue_flag;
+    int game_over_flag;
     int move_x;
     int move_y;
 }STATIC;
