@@ -79,26 +79,27 @@ snake_node get_tag()
 }
 
 
-int check_point(LLIST *snake_body, snake_node *node)
+int check_point(LLIST* snake_body_check, snake_node *node)
 {
-    if (snake_find_body(snake_body, node , cmp_node) != NULL || node->x == 0 || node->x == M-1 || node->y ==0 || node->y == N-1)
+    if (snake_find_body(snake_body_check, node , cmp_node) != NULL || node->x == 0 || node->x == M-1 || node->y ==0 || node->y == N-1)
     {
         return 0;
     }
     return 1;
 }
 
-int check_obstacle(snake_node *node)
+int check_obstacle(LLIST* snake_body_check,snake_node *node)
 {
-    if (snake_find_obstacle(node , cmp_node) != NULL || node->x == 0 || node->x == M-1 || node->y ==0 || node->y == N-1)
+    if (snake_find_obstacle(snake_body_check,node , cmp_node) != NULL || node->x == 0 || node->x == M-1 || node->y ==0 || node->y == N-1)
     {
         return 0;
     }
     return 1;
 }
 
-void print_classic(const LLIST *snake_body)
+void print_classic(LLIST *snake_body_find)
 {
+    
     int i, j;
     for (i=0; i<M; ++i)
     {
@@ -112,11 +113,11 @@ void print_classic(const LLIST *snake_body)
             {
                 printf("#");
             }
-            else if (snake_find_body(snake_body, &find_body , cmp_node) != NULL)
+            else if (snake_find_body(snake_body_find,&find_body , cmp_node) != NULL)
             {
                 printf("O");
             }
-            else if (i==tagx && j==tagy)
+            else if (i==STATIC_t.tagx && j==STATIC_t.tagy)
             {
                 printf("x");
             }
@@ -132,7 +133,7 @@ void print_classic(const LLIST *snake_body)
     printf("向上：W，向下：S，向左：A，向右：D\n");
 }
 
-void print_challenge(const LLIST *snake_body)
+void print_challenge(LLIST *snake_body_find , LLIST *snake_obstacle_find)
 {
     int i, j;
     for (i=0; i<M; ++i)
@@ -150,15 +151,15 @@ void print_challenge(const LLIST *snake_body)
             {
                 printf("#");
             }
-            else if (snake_find_body(snake_body, &find_body , cmp_node) != NULL)
+            else if (snake_find_body(snake_body_find,&find_body , cmp_node) != NULL)
             {
                 printf("O");
             }
-            else if(snake_find_obstacle(&find_obstacle , cmp_node) != NULL)
+            else if(snake_find_obstacle(snake_obstacle_find,&find_obstacle , cmp_node) != NULL)
             {
                 printf("@");
             }
-            else if (i==tagx && j==tagy)
+            else if (i==STATIC_t.tagx && j==STATIC_t.tagy)
             {
                 printf("x");
             }
@@ -174,34 +175,37 @@ void print_challenge(const LLIST *snake_body)
     printf("向上：W，向下：S，向左：A，向右：D\n");
 }
 
-void init_map()
+
+
+LLIST *init_map(LLIST * snake_obstacle_init)
 {
     obstacle_num = 10;
     int num = 0;
     
-    snake_obstacle = llist_creat(sizeof(snake_node));
-    ERRP(NULL == snake_obstacle , snake_obstacle malloc , goto ERR1);
+    snake_obstacle_init = llist_creat(sizeof(snake_node));
+    ERRP(NULL == snake_obstacle_init , snake_obstacle_init malloc , goto ERR1);
 
     snake_node obstacle;
 
     while(num < 10)
     {
         obstacle = get_tag();
-        if(!check_obstacle(&obstacle))
+        if(!check_obstacle(snake_obstacle_init,&obstacle))
         {
             obstacle = get_tag();
         }
-        snake_insert_obstacle(&obstacle);
+        snake_insert_obstacle(snake_obstacle_init , &obstacle);
         num++;
     }
-    
+    return snake_obstacle_init;
+
 ERR1: 
-    return ;
+    return NULL;
 }
 
-void snake_insert_obstacle(snake_node *obstacle)
+void snake_insert_obstacle(LLIST* snake_obstacle_insert,  snake_node *obstacle)
 {
-    llist_append(snake_obstacle, obstacle);
+    llist_append(snake_obstacle_insert, obstacle);
     return ;
 }
 
