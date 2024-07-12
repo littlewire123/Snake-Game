@@ -7,6 +7,7 @@
 #define LENGTH 3
 #define PATH_CLASSIC "../user/classic_game.db"
 #define PATH_CHALLENGE "../user/challenge_game.db"
+#define PATH_POWER "../user/power_up_game.db"
 
 #include "../llist/llist.h"
 

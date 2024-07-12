@@ -87,7 +87,7 @@ void challenge_mode_start(LLIST *snake_body_start, LLIST *snake_obstacle_start)
 
 void continue_challenge_game(LLIST *snake_body_start, LLIST *snake_obstacle_start)
 {
-    set_noblock_mode(); // 函数用来设置输入不阻塞和禁用缓冲区
+    set_noblock_mode(); //函数用来设置输入不阻塞和禁用缓冲区
 
     char input;
     srand(time(NULL));
@@ -163,8 +163,6 @@ void timeout_challenge_game(LLIST *snake_body_timeout)
 
 void challenge_move_snake(LLIST *snake_body_move, LLIST *snake_obstacle_move)
 {
-    snake_node *save_node = NULL;
-
     NODE *head_node = snake_body_move->head.prev;
     snake_node *temp = (snake_node *)head_node->data;
 
@@ -184,28 +182,20 @@ void challenge_move_snake(LLIST *snake_body_move, LLIST *snake_obstacle_move)
     if (check_node->x == STATIC_t.tagx && check_node->y == STATIC_t.tagy)
     {
         snake_node newtag;
-        save_node = (snake_node *)malloc(sizeof(snake_node));
-        ERRP(NULL == save_node, save_node malloc, goto ERR2);
 
-        save_node->x = STATIC_t.tagx;
-        save_node->y = STATIC_t.tagy;
+        newtag.x = STATIC_t.tagx;
+        newtag.y = STATIC_t.tagy;
 
-        snake_insert_body(snake_body_move, save_node);
+        snake_insert_body(snake_body_move, &newtag);
         newtag = get_tag();
         STATIC_t.tagx = newtag.x;
         STATIC_t.tagy = newtag.y;
 
-        save_node->x = newtag.x;
-        save_node->y = newtag.y;
-
-        while (snake_find_body(snake_body_move, save_node, cmp_node) != NULL || snake_find_obstacle(snake_obstacle_move, save_node, cmp_node))
+        while (snake_find_body(snake_body_move, &newtag, cmp_node) != NULL || snake_find_obstacle(snake_obstacle_move, &newtag, cmp_node))
         {
             newtag = get_tag();
             STATIC_t.tagx = newtag.x;
             STATIC_t.tagy = newtag.y;
-
-            save_node->x = newtag.x;
-            save_node->y = newtag.y;
         }
 
         if (STATIC_t.speed != 150000)
@@ -213,7 +203,6 @@ void challenge_move_snake(LLIST *snake_body_move, LLIST *snake_obstacle_move)
             STATIC_t.speed -= CHANGE_SPEED;
         }
         free(check_node);
-        free(save_node);
         return;
     }
 
@@ -226,10 +215,7 @@ void challenge_move_snake(LLIST *snake_body_move, LLIST *snake_obstacle_move)
     memmove(tail->data, check_node, snake_body_move->size);
 
     free(check_node);
-    free(save_node);
     return;
-ERR2:
-    free(check_node);
 ERR1:
     return;
 }
