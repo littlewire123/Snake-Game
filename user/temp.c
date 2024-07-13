@@ -63,6 +63,7 @@ struct map_t *parse_map(const char *data, int data_size);
 struct snake_data_t *parse_snake_data(const char *data, int data_size);
 struct food_t *parse_food(const char *data, int data_size);
 struct direction_t *parse_direction(const char *data, int data_size);
+struct id_t *parse_id(const char *data , int data_size);
 
 void *parse(const char *buffer, int buffer_size)
 {

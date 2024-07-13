@@ -28,13 +28,18 @@ int update_snake_flag;
 
 struct sockaddr_in server_addr;
 int client_fd;
+int id;
+int over_online_game;
 
 int init_online_mode();
 void start_online_game();
 void print_online_map();
 
-int  online_find_body();
+int  online_find_body(struct position_t find_body);
 struct position_t * online_find_obstacle(struct position_t find_obstacle);
 struct position_t * online_find_food(struct position_t find_food);
+void end_online_game();
+void send_direct_sign();
+struct direction_t* get_direct_control();
 
 #endif
