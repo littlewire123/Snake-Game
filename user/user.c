@@ -33,7 +33,7 @@ void chioce_mod()
     srand(time(NULL));
     while(1)
     {
-        system("clear");
+        //system("clear");
         print_menu();
         int mod;
         scanf("%d",&mod);
@@ -49,6 +49,14 @@ void chioce_mod()
             Power_Up_mod();
             break;
         case 4:
+            if (!init_online_mode())
+            {
+                printf("online mode init failed\n");
+            }
+            else
+            {
+                start_online_game();
+            }
             break;
         case 5:   
             About_Game();  
