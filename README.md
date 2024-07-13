@@ -71,12 +71,20 @@
 
 #### 通信格式：
 
-##### （1）数据格式：
+
+
+##### （1）传送数据格式：
+
+- 数据总字节数（四字节）
+
+- 数据包个数（四字节）
+- 数据包（每个数据包之间用`'\0'`区分，用于数据校验）
+
+##### （2）数据包格式：
 
 - 有效数据长度（开头四字节）
-- 数据类型（往后四字节，0：地图数据`struct map_t`，1：玩家蛇的位置数据`struct snake_data`，2：食物位置信息`struct food_t`，3：玩家控制信息`struct direction_t`）
+- 数据类型（往后四字节，0：地图数据`struct map_t`，1：玩家蛇的位置数据`struct snake_data`，2：食物位置信息`struct food_t`，3：玩家控制信息`struct direction_t`，4：用户id`int32_t`）
 - 数据正文，长度为开头的四字节
-- 不同报文用`'\0'`区分
 
 ##### （2）用到的数据结构：
 
@@ -91,7 +99,7 @@ struct map_t
 };
 
 //蛇信息
-struct snake_data
+struct snake_data_t
 {
 	size_t id;
     size_t num;
@@ -134,6 +142,30 @@ struct position_t
 
 - 接收服务器发送来的地图信息，每条蛇的信息，然后打印地图。
 - 接收用户的移动操作，发送给服务器。
+
+
+
+### 5.服务器游戏逻辑实现细节
+
+##### （1）要维护的数据：
+
+- 玩家状态结构体`struct user_status`，用一个`map<int32_t, user_status> _status`存储
+- 食物位置结构体`food_t _foods`
+- 地图信息`map_t _map`
+
+##### （2）用到的数据结构：
+
+```
+struct user_status
+{
+	int move_x;
+	int move_y;
+	
+	snake_data_t snake;
+};
+```
+
+
 
 ## 三、安全与合规
 
