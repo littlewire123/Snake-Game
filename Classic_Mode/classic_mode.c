@@ -22,7 +22,7 @@ void start_classic_game(LLIST *snake_body_start)
 
     STATIC_t.move_x = 0;
     STATIC_t.move_y = 1;
-    STATIC_t.speed = 400000;
+    STATIC_t.speed_ture = 400000;
 
     srand(time(NULL));
     tag = get_tag();
@@ -76,7 +76,7 @@ void start_classic_game(LLIST *snake_body_start)
         classic_move_snake(snake_body_start);
         print_classic(snake_body_start);
 
-        usleep(STATIC_t.speed);
+        usleep(STATIC_t.speed_ture);
     }
     if(STATIC_t.game_over_flag == 0)
     {
@@ -133,7 +133,7 @@ void continue_classic_game(LLIST *snake_body_continue)
 
         print_classic(snake_body_continue);
 
-        usleep(STATIC_t.speed);
+        usleep(STATIC_t.speed_ture);
     }
     if(STATIC_t.game_over_flag == 0)
     {
@@ -166,8 +166,6 @@ void timeout_classic_game(LLIST *snake_body_timeout)
 
 void classic_move_snake(LLIST *snake_body_move)
 {
-    snake_node *save_node = NULL;
-
     NODE *head_node = snake_body_move->head.prev;
     snake_node *temp = (snake_node *)head_node->data;
 
@@ -187,37 +185,29 @@ void classic_move_snake(LLIST *snake_body_move)
     if (check_node->x == STATIC_t.tagx && check_node->y == STATIC_t.tagy)
     {
         snake_node newtag;
-        save_node = (snake_node *)malloc(sizeof(snake_node));
-        ERRP(NULL == save_node, save_node malloc, goto ERR2);
 
-        save_node->x = STATIC_t.tagx;
-        save_node->y = STATIC_t.tagy;
+        newtag.x = STATIC_t.tagx;
+        newtag.y = STATIC_t.tagy;
 
-        snake_insert_body(snake_body_move, save_node);
+        snake_insert_body(snake_body_move, &newtag);
 
         newtag = get_tag();
         STATIC_t.tagx = newtag.x;
         STATIC_t.tagy = newtag.y;
 
-        save_node->x = newtag.x;
-        save_node->y = newtag.y;
 
-        while (snake_find_body(snake_body_move, save_node, cmp_node) != NULL)
+        while (snake_find_body(snake_body_move, &newtag, cmp_node) != NULL)
         {
             newtag = get_tag();
             STATIC_t.tagx = newtag.x;
             STATIC_t.tagy = newtag.y;
-
-            save_node->x = newtag.x;
-            save_node->y = newtag.y;
         }
 
-        if (STATIC_t.speed != 200000)
+        if (STATIC_t.speed_ture != 200000)
         {
-            STATIC_t.speed -= CHANGE_SPEED;
+            STATIC_t.speed_ture -= CHANGE_SPEED;
         }
         free(check_node);
-        free(save_node);
         return;
     }
 
@@ -230,10 +220,7 @@ void classic_move_snake(LLIST *snake_body_move)
     memmove(tail->data, check_node, snake_body_move->size);
 
     free(check_node);
-    free(save_node);
     return;
-ERR2:
-    free(check_node);
 ERR1:
     return;
 }
