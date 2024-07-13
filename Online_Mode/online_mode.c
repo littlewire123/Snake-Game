@@ -78,7 +78,7 @@ void start_online_game()
 
     while (1)
     {
-        read_size = recv(client_fd, buffer, BUFFER_SIZE - 1, 0);
+        read_size = recv(client_fd, buffer, BUFFER_SIZE, 0);
         update_snake_flag = 1;
         if (read_size < 8)
         {
@@ -86,20 +86,22 @@ void start_online_game()
             continue;; // 至少需要8字节来读取长度和数据类型
         }
 
+        printf("here is a test\n");
+
         int data_length;
         int data_num;
 
         memcpy(&data_length, buffer, 4);
         memcpy(&data_num, buffer + 4, 4);
 
-        if (read_size - 8 < data_length)
+        if (read_size < data_length)
         {
+            printf("read_size is to less : %d", read_size);
             continue;    // 检查数据长度是否匹配
         }
 
         const char *data = buffer + 8;
 
-        printf("data_num : %d", data_num);
 
         int i = 0;
         while (i < data_num)

@@ -33,7 +33,7 @@ int init_online_mode();
 void start_online_game();
 void print_online_map();
 
-int  online_find_body();
+int  online_find_body(struct position_t find_body);
 struct position_t * online_find_obstacle(struct position_t find_obstacle);
 struct position_t * online_find_food(struct position_t find_food);
 
