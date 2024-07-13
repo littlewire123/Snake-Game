@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "inet.h": "c"
+        "online_mode.h": "c",
+        "user.h": "c"
     }
 }
