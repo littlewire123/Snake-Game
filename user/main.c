@@ -95,6 +95,11 @@ int main()
                     continue_power_game(snake_body_power,snake_obstacle_power,snake_tag_power);
                 }
             }
+        case 4:
+            break;
+        case 5:   
+            About_Game();  
+            break;
             
         default:
             break;

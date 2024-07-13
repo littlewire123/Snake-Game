@@ -225,9 +225,9 @@ void snake_power_mod(LLIST *snake_power_mod, LLIST *snake_obstacle_mod, LLIST *s
 {
     int num = 0;
 
-    //num = rand() % 100;
+    num = rand() % 100;
 
-    if (num > 0 && num < 10) // 加速
+    if (num >= 0 && num < 10) // 加速
     {
         power_mod_count = 50;
         STATIC_t.speed_ture = 100000;
@@ -239,7 +239,7 @@ void snake_power_mod(LLIST *snake_power_mod, LLIST *snake_obstacle_mod, LLIST *s
         STATIC_t.speed_ture = 400000;
         lock_power = 0;
     }
-    else if (num == 0) // 增加长度
+    else if (num >= 20 && num <30) // 增加长度
     {
         if (snake_power_mod->count < 500)
         {

@@ -5,9 +5,9 @@
 #define N 100   
 #define CHANGE_SPEED 5000
 #define LENGTH 3
-#define PATH_CLASSIC "../user/classic_game.db"
-#define PATH_CHALLENGE "../user/challenge_game.db"
-#define PATH_POWER "../user/power_up_game.db"
+#define PATH_CLASSIC "../Game_db/classic_game.db"
+#define PATH_CHALLENGE "../Game_db/challenge_game.db"
+#define PATH_POWER "../Game_db/power_up_game.db"
 
 #include "../llist/llist.h"
 

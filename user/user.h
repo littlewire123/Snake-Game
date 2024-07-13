@@ -9,5 +9,8 @@
 
 
 void snake_destroy();
+void About_Game();
+
+
 
 #endif
