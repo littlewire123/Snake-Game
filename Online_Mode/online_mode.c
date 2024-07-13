@@ -27,30 +27,66 @@ void init_online_mode(const char *buffer, int buffer_size)
         switch (packets_num)
         {
         case MAP:
-            map =  parse_map(data, packets_length);
+            map = parse_map(data, packets_length);
         case SNAKE:
             snake_data = parse_snake_data(data, packets_length);
-            memcpy(snake_data)
+            memcpy(snake_data + snake_num * sizeof(struct snake_data_t), snake_data, sizeof(struct snake_data_t)) ;
+            snake_num++;
         case FOOD:
-            foods =  parse_food(data, packets_length);
+            foods = parse_food(data, packets_length);
         case DIRECTION:
-            direction =  parse_direction(data, packets_length);
-        default:
-            return ;
+            direction = parse_direction(data, packets_length);
+            default : return;
         }
 
         data = data + packets_length;
         i++;
     }
 
-    return ;
+    return;
 }
 
-LLIST *init_snake_all_data()
+int init_online_TCPclient()
 {
-    LLIST *snake_all_data = NULL;
+    int client_fd;
+    int i, j;
+    struct sockaddr_in server_addr;
+    char buffer[BUFFER_SIZE];
 
-    snake_all_data = llist_creat(sizeof(struct snake_data_t));
+    // 创建socket
+    client_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (client_fd < 0)
+    {
+        perror("socket creation failed");
+        return 0;
+    }
 
-    return snake_all_data;
+    // 设置服务器地址结构
+    memset(&server_addr, 0, sizeof(server_addr));
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(SERVER_PORT);
+    server_addr.sin_addr.s_addr = inet_addr(SERVER_IP);
+
+    // 连接到服务器
+    if (connect(client_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
+    {
+        perror("connect failed");
+        return 0;
+    }
+    return 1;
+}
+
+void start_online_game()
+{
+    if(init_online_TCPclient() == 0)
+    {
+        return ; 
+    }
+
+    while (1)
+    {
+        init_online_mode();
+        
+    }
+    
 }
