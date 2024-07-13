@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "online_mode.h": "c",
+        "user.h": "c"
+    }
+}

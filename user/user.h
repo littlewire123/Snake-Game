@@ -6,6 +6,7 @@
 #include "../Classic_Mode/classic_mode.h"
 #include "../Challenge_Mode/challenge_mode.h"
 #include "../Power_up_Mode/power_up_mode.h"
+#include "../Online_Mode/online_mode.h"
 
 
 /**

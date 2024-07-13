@@ -40,7 +40,8 @@
 ### 7.拟实现的功能
 
 - 经典模式：经典的贪吃蛇单人玩法
-- 挑战模式：随机地图障碍物
+- 挑战模式：随机地图障碍物，速度更快
+- 道具模式：随机障碍物，多个食物生成，吃食物后有概率获得随机效果（无敌一段时间，速度变快，速度变慢等）
 - 多人联机：多人共同游玩
 
 ## 二、技术架构
@@ -68,6 +69,68 @@
 - 所有玩家的状态，包括蛇的位置、移动方向、得分。
 - 定时（固定的时间间隔，20ms或30ms）向所有客户端发送游戏状态更新。
 
+#### 通信格式：
+
+
+
+##### （1）传送数据格式：
+
+- 数据总字节数（四字节）
+
+- 数据包个数（四字节）
+- 数据包（每个数据包之间用`'\0'`区分，用于数据校验）
+
+##### （2）数据包格式：
+
+- 有效数据长度（开头四字节）
+- 数据类型（往后四字节，0：地图数据`struct map_t`，1：玩家蛇的位置数据`struct snake_data`，2：食物位置信息`struct food_t`，3：玩家控制信息`struct direction_t`，4：用户id`int32_t`）
+- 数据正文，长度为开头的四字节
+
+##### （2）用到的数据结构：
+
+```c
+//地图
+struct map_t
+{
+	size_t num;
+	size_t width;
+	size_t height;
+	struct position_t *obstacle_pos;
+};
+
+//蛇信息
+struct snake_data_t
+{
+	size_t id;
+    size_t num;
+    struct position_t *snake_pos;
+};
+
+//食物位置
+struct food_t
+{
+    size_t num;
+    struct position_t *foods;
+};
+
+//移动方向信息（玩家控制）
+struct direction_t
+{
+    //-1 : f方向，0 : 不移动，1 : 正方向
+    int move_x;
+    int move_y;
+};
+
+//位置坐标
+struct position_t
+{
+    size_t x;
+    size_t y;
+};
+```
+
+
+
 ### 4. 服务器和客户端的任务
 
 ##### （1）服务器：
@@ -79,6 +142,30 @@
 
 - 接收服务器发送来的地图信息，每条蛇的信息，然后打印地图。
 - 接收用户的移动操作，发送给服务器。
+
+
+
+### 5.服务器游戏逻辑实现细节
+
+##### （1）要维护的数据：
+
+- 玩家状态结构体`struct user_status`，用一个`map<int32_t, user_status> _status`存储
+- 食物位置结构体`food_t _foods`
+- 地图信息`map_t _map`
+
+##### （2）用到的数据结构：
+
+```
+struct user_status
+{
+	int move_x;
+	int move_y;
+	
+	snake_data_t snake;
+};
+```
+
+
 
 ## 三、安全与合规
 
