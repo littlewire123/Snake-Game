@@ -112,7 +112,6 @@ int check_tag(LLIST *snake_tag_chech, snake_node *node)
 
 void print_classic(LLIST *snake_body_find)
 {
-
     int i, j;
     for (i = 0; i < M; ++i)
     {
@@ -124,15 +123,21 @@ void print_classic(LLIST *snake_body_find)
 
             if (i == 0 || j == 0 || i == M - 1 || j == N - 1)
             {
+                BLUE_TEXT();
                 printf("#");
+                RESET_TEXT();
             }
             else if (snake_find_body(snake_body_find, &find_body, cmp_node) != NULL)
             {
+                GREEN_TEXT();
                 printf("O");
+                RESET_TEXT();
             }
             else if (i == STATIC_t.tagx && j == STATIC_t.tagy)
             {
+                YELLOW_TEXT();
                 printf("x");
+                RESET_TEXT();
             }
             else
             {
@@ -142,7 +147,9 @@ void print_classic(LLIST *snake_body_find)
         printf("\n");
     }
 
-    printf("向上：W，向下：S，向左：A，向右：D\n");
+    YELLOW_TEXT();
+    printf("向上：W，向下：S，向左：A，向右：D 退出并保存：Q\n");
+    RESET_TEXT();
 }
 
 void print_challenge(LLIST *snake_body_find, LLIST *snake_obstacle_find)
@@ -161,19 +168,27 @@ void print_challenge(LLIST *snake_body_find, LLIST *snake_obstacle_find)
 
             if (i == 0 || j == 0 || i == M - 1 || j == N - 1)
             {
+                BLUE_TEXT();
                 printf("#");
+                RESET_TEXT();
             }
             else if (snake_find_body(snake_body_find, &find_body, cmp_node) != NULL)
             {
+                GREEN_TEXT();
                 printf("O");
+                RESET_TEXT();
             }
             else if (snake_find_obstacle(snake_obstacle_find, &find_obstacle, cmp_node) != NULL)
             {
+                MAGENTA_TEXT();
                 printf("@");
+                RESET_TEXT();
             }
             else if (i == STATIC_t.tagx && j == STATIC_t.tagy)
             {
+                RED_TEXT();
                 printf("x");
+                RESET_TEXT();
             }
             else
             {
@@ -183,7 +198,9 @@ void print_challenge(LLIST *snake_body_find, LLIST *snake_obstacle_find)
         printf("\n");
     }
 
-    printf("向上：W，向下：S，向左：A，向右：D\n");
+    YELLOW_TEXT();
+    printf("向上：W，向下：S，向左：A，向右：D 退出并保存：Q\n");
+    RESET_TEXT();
 }
 
 void print_power(LLIST *snake_body_find, LLIST *snake_obstacle_find, LLIST *snake_tag_power_find)
@@ -193,7 +210,7 @@ void print_power(LLIST *snake_body_find, LLIST *snake_obstacle_find, LLIST *snak
     {
         for (j = 0; j < N; ++j)
         {
-            snake_node find_body, find_obstacle ,find_tag;
+            snake_node find_body, find_obstacle, find_tag;
             find_body.x = i;
             find_body.y = j;
 
@@ -205,19 +222,27 @@ void print_power(LLIST *snake_body_find, LLIST *snake_obstacle_find, LLIST *snak
 
             if (i == 0 || j == 0 || i == M - 1 || j == N - 1)
             {
+                BLUE_TEXT();
                 printf("#");
+                RESET_TEXT();
             }
             else if (snake_find_body(snake_body_find, &find_body, cmp_node) != NULL)
             {
+                GREEN_TEXT();
                 printf("O");
+                RESET_TEXT();
             }
             else if (snake_find_obstacle(snake_obstacle_find, &find_obstacle, cmp_node) != NULL)
             {
+                MAGENTA_TEXT();
                 printf("@");
+                RESET_TEXT();
             }
-            else if (snake_find_tag(snake_tag_power,&find_tag,cmp_node) != NULL)
+            else if (snake_find_tag(snake_tag_power_find, &find_tag, cmp_node) != NULL)
             {
+                RED_TEXT();
                 printf("x");
+                RESET_TEXT();
             }
             else
             {
@@ -227,7 +252,9 @@ void print_power(LLIST *snake_body_find, LLIST *snake_obstacle_find, LLIST *snak
         printf("\n");
     }
 
-    printf("向上：W，向下：S，向左：A，向右：D\n");
+    YELLOW_TEXT();
+    printf("向上：W，向下：S，向左：A，向右：D 退出并保存：Q\n");
+    RESET_TEXT();
 }
 
 LLIST *init_map(LLIST*snake_body_find, LLIST *snake_obstacle_init)

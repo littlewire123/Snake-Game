@@ -8,6 +8,14 @@
 #define PATH_CLASSIC "../Game_db/classic_game.db"
 #define PATH_CHALLENGE "../Game_db/challenge_game.db"
 #define PATH_POWER "../Game_db/power_up_game.db"
+#define CLEAR_SCREEN() printf("\033[H\033[J") // 清屏
+#define RED_TEXT() printf("\033[31m")        // 红色文字
+#define GREEN_TEXT() printf("\033[32m")      // 绿色文字
+#define YELLOW_TEXT() printf("\033[33m")     // 黄色文字
+#define BLUE_TEXT() printf("\033[34m")       // 蓝色文字
+#define RESET_TEXT() printf("\033[0m")       // 重置文字颜色
+#define CYAN_TEXT() printf("\033[36m")       // 青色文字
+#define MAGENTA_TEXT() printf("\033[35m")    // 紫色文字
 
 #include "../llist/llist.h"
 
