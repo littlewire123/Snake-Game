@@ -184,10 +184,6 @@ void About_Game()
     printf("2 ：挑战模式 ：有一个食物和十个障碍物，速度会更快\n");
     printf("3 ：道具模式 ：有十个食物和十个障碍物，吃到食物有概率获取道具效果(加速、减速、增加3个长度、减小3个长度、随机传送)\n");
     printf("4 ：联机模式 ：经典模式下玩家对抗（其他模式联机模式开发中......）\n\n");
-    printf("单机运行环境：\n");
-    printf("Linux操作系统\n\n");
-    printf("联机运行环境：\n");
-    printf("Linux_x86系统\n\n");
     printf("本项目遵循MIT开源协议；\n");
     printf("项目地址：https://github.com/littlewire123/Snake-Game\n\n");
 
