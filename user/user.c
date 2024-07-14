@@ -33,7 +33,6 @@ void chioce_mod()
     srand(time(NULL));
     while(1)
     {
-        //system("clear");
         print_menu();
         int mod;
         scanf("%d",&mod);

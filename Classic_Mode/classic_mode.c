@@ -144,6 +144,7 @@ void continue_classic_game(LLIST *snake_body_continue)
 
 void end_classic_game(LLIST *snake_body_end)
 {
+    system("clear");
     reset_block_mode();
     FILE *fp = NULL;
     fp = fopen(PATH_CLASSIC , "w");

@@ -28,8 +28,6 @@ void start_online_game()
         return;
     }
 
-    // printf("test online\n");
-
     int read_size;
     struct snake_data_t *snake_data;
     char buffer[BUFFER_SIZE];
@@ -48,8 +46,7 @@ void start_online_game()
         if (read_size < 8)
         {
             printf("too less data\n");
-            continue;
-            ; // 至少需要8字节来读取长度和数据类型
+            continue; // 至少需要8字节来读取长度和数据类型
         }
 
         int data_length;
@@ -65,10 +62,13 @@ void start_online_game()
 
         const char *data = buffer + 8;
 
-        // printf("data_num : %d", data_num);
-
         int i = 0;
         int offset = 0;
+
+        if(data_num == 0)
+        {
+            snake_num = 0;
+        }
 
         while (i < data_num)
         {
@@ -81,20 +81,10 @@ void start_online_game()
             memcpy(&packets_type, data + offset, sizeof(int));
             offset += sizeof(int);
 
-            // printf("data_length : %d, type : %d\n", data_length, packets_type);
-
             switch (packets_type)
             {
             case MAP:
                 map = parse_map(data + offset, data_length);
-                if (map != NULL)
-                {
-                    // printf("num : %d, width : %d, height : %d\n", map->num, map->width, map->height);
-                }
-                else
-                {
-                    printf("map is null\n");
-                }
                 break;
             case SNAKE:
                 if (update_snake_flag == 1)
@@ -108,22 +98,19 @@ void start_online_game()
                 snake_num++;
                 printf("snake_num : %d\n", snake_num);
                 int i;
-                for (i = 0; i < snake_num ;i++)
+                for (i = 0; i < snake_num; i++)
                 {
-                    printf("snake_id : %d\n",snake_all_data[i].id);
+                    printf("snake_id : %d\n", snake_all_data[i].id);
                 }
-                    break;
+                break;
             case FOOD:
                 foods = parse_food(data + offset, data_length);
-                // printf("map\n");
                 break;
             case DIRECTION:
                 direction = parse_direction(data + offset, data_length);
-                // printf("map\n");
                 break;
             case ID:
                 id = parse_id(data + offset, data_length);
-                // printf("id : %d \n", id);
                 break;
             default:
                 break;
@@ -136,7 +123,6 @@ void start_online_game()
 
             if (ch != '\0')
             {
-                // printf("data des error\n");
                 close(client_fd);
                 return;
             }
@@ -148,7 +134,7 @@ void start_online_game()
 
 void print_online_map()
 {
-    int i, j;
+    int i, j, user_id;
     for (i = 0; i < map->height; ++i)
     {
         for (j = 0; j < map->width; ++j)
@@ -169,11 +155,18 @@ void print_online_map()
                 printf("#");
                 RESET_TEXT();
             }
-            else if (online_find_body(find_body) != -1)
+            else if ((user_id = online_find_body(find_body)) != -1)
             {
-                GREEN_TEXT();
-                printf("O");
-                RESET_TEXT();
+                if (user_id == id)
+                {
+                    GREEN_TEXT();
+                    printf("O");
+                    RESET_TEXT();
+                }
+                else
+                {
+                    printf("O");
+                }
             }
             else if (online_find_obstacle(find_obstacle) != NULL)
             {
@@ -196,14 +189,13 @@ void print_online_map()
     }
 
     YELLOW_TEXT();
-    printf("向上：W，向下：S，向左：A，向右：D 退出并保存：Q\n");
+    printf("向上：W，向下：S，向左：A，向右：D 退出：Q\n");
     RESET_TEXT();
 }
 
 int online_find_body(struct position_t find_body)
 {
     int i, j;
-
     for (i = 0; i < snake_num; ++i)
     {
         for (j = 0; j < snake_all_data[i].num; ++j)
@@ -257,6 +249,7 @@ struct direction_t *get_direct_control()
 
     if (input == 'q' || input == 'Q')
     {
+        system("clear");
         end_online_game();
         return NULL;
     }
@@ -291,9 +284,7 @@ struct direction_t *get_direct_control()
 void send_direct_sign(struct direction_t *dir)
 {
     int data_size;
-    // printf("test send 1\n");
     char *buffer = serialize_direction(dir, &data_size);
-    // printf("test send 2\n");
 
     char buff[1024];
     int offset = 0;
@@ -305,22 +296,18 @@ void send_direct_sign(struct direction_t *dir)
     // 发送的数据长度
     memcpy(buff + offset, &total_lenth, sizeof(int));
     offset += sizeof(int);
-    // printf("offset1 : %d \n" , offset);
 
     // 数据包个数
     memcpy(buff + offset, &pack_num, sizeof(int));
     offset += sizeof(int);
-    // printf("offset2 : %d \n" , offset);
 
     // 数据包
     memcpy(buff + offset, buffer, data_size);
     offset += data_size;
-    // printf("offset3 : %d \n" , offset);
 
     // 包分隔符
     memcpy(buff + offset, &ch, sizeof(char));
     offset += sizeof(char);
-    // printf("offset4 : %d \n" , offset);
 
     // 发送
     send(client_fd, buff, total_lenth, 0);

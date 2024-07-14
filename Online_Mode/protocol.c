@@ -126,7 +126,6 @@ struct food_t *parse_food(const char *data, int data_size)
     int offset = 0;
     memcpy(&food->num, data + offset, sizeof(int));
     offset += sizeof(int);
-    //printf("food_num : %d\n", food->num);
 
     int position_count = food->num;
     int expected_size = sizeof(int) + position_count * sizeof(struct position_t);
@@ -257,23 +256,17 @@ char *serialize_direction(const struct direction_t *data, int *data_size)
     if (chs == NULL)
         return NULL;
 
-    //printf("%d %d\n",data->move_x,data->move_y);
-
     int offset = 0;
     memcpy(chs + offset, &cur_size, sizeof(int)); // 数据长度
     offset += sizeof(int);
-    //printf("offset1 : %d \n" , offset);
     int type = DIRECTION;
     memcpy(chs + offset, &type, sizeof(int)); // 数据类型
     offset += sizeof(int);
-   // printf("offset2 : %d \n" , offset);
 
     memcpy(chs + offset, &data->move_x, sizeof(int));
     offset += sizeof(int);
-    //printf("offset3 : %d \n" , offset);
     memcpy(chs + offset, &data->move_y, sizeof(int));
     offset += sizeof(int);
-    //printf("offset4 : %d \n" , offset);
     return chs;
 }
 
