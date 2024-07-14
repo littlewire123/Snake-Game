@@ -261,8 +261,22 @@ void TcpServer::send_snakes_and_foods_data(int client)
     int32_t pack_num = users.size() + 1;
     char ch = '\0';               // 包之间的分隔符
     int offset = sizeof(int32_t); // 预留总数据长的的位置；
-    // 先写入数据包数量，4个字节
+    
     int32_t data_size;
+    //没有蛇的情况
+    if (users.size() <= 0)
+    {
+        //发送一个空数据
+        pack_num = 0;
+        memcpy(send_buff + offset, &pack_num, sizeof(int32_t));
+        offset += sizeof(int32_t);
+        memcpy(send_buff, &offset, sizeof(int32_t));
+
+        send(client, send_buff, offset, 0);
+        return;
+    }
+
+    // 先写入数据包数量，4个字节
     memcpy(send_buff + offset, &pack_num, sizeof(int32_t));
     offset += sizeof(int32_t);
 
@@ -326,13 +340,13 @@ void TcpServer::run()
     // acceptConnections();
     cout << "run success" << endl;
 
-    int32_t count = 0;    //计数值，计数到一定值才更新游戏状态,确保不是更新一次发送一次，这样既可以减少客户端阻塞的时间，降低控制延迟，又能防止网络丢包造成的蛇瞬移
+    int32_t count = 0; // 计数值，计数到一定值才更新游戏状态,确保不是更新一次发送一次，这样既可以减少客户端阻塞的时间，降低控制延迟，又能防止网络丢包造成的蛇瞬移
 
     // 游戏逻辑处理
     while (true)
     {
         map<int32_t, user_status> users;
-        //game.move();
+        // game.move();
 
         if (count >= 3)
         {
@@ -342,20 +356,17 @@ void TcpServer::run()
 
         users = game.get_user_status();
 
-        if (users.size() > 0)
+        // 发送用户的蛇位置数据
+        for (auto user : connections)
         {
-            // 发送用户的蛇位置数据
-            for (auto user : connections)
-            {
-                send_snakes_and_foods_data(user.first);
-            }
+            send_snakes_and_foods_data(user.first);
         }
 
         printf("user num : %d\n", connections.size());
 
         game.print();
 
-        usleep(game.get_speed()/3);
+        usleep(game.get_speed() / 3);
 
         ++count;
     }
