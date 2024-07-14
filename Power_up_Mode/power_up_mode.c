@@ -129,6 +129,7 @@ void continue_power_game(LLIST *snake_body_start, LLIST *snake_obstacle_start, L
 
 void power_mode_end(LLIST *snake_body_end)
 {
+    system("clear");
     reset_block_mode();
     FILE *fp = NULL;
     fp = fopen(PATH_POWER, "w");
