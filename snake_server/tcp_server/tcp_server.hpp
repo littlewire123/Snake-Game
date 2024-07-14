@@ -326,11 +326,19 @@ void TcpServer::run()
     // acceptConnections();
     cout << "run success" << endl;
 
+    int32_t count = 0;    //计数值，计数到一定值才更新游戏状态,确保不是更新一次发送一次，这样既可以减少客户端阻塞的时间，降低控制延迟，又能防止网络丢包造成的蛇瞬移
+
     // 游戏逻辑处理
     while (true)
     {
         map<int32_t, user_status> users;
-        game.move();
+        //game.move();
+
+        if (count >= 3)
+        {
+            game.move();
+            count = 0;
+        }
 
         users = game.get_user_status();
 
@@ -347,7 +355,9 @@ void TcpServer::run()
 
         game.print();
 
-        sleep(1);
+        usleep(game.get_speed()/3);
+
+        ++count;
     }
 }
 
