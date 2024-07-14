@@ -149,6 +149,7 @@ void print_classic(LLIST *snake_body_find)
 
 void print_challenge(LLIST *snake_body_find, LLIST *snake_obstacle_find)
 {
+    system("clear");
     int i, j;
     for (i = 0; i < M; ++i)
     {
