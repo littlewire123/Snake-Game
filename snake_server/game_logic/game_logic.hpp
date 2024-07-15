@@ -22,7 +22,7 @@ public:
     game_logic()
     {
         default_snake_length = 3; // 蛇的默认长度
-        default_width = 100;      // 地图默认宽度
+        default_width = 60;      // 地图默认宽度
         default_height = 30;      // 地图默认高度
         default_max_num = 500;    // 最大大小
         game_mode = CLASSIC;
