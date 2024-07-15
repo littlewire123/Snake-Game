@@ -96,6 +96,7 @@ void Classic_mod()
         BLUE_TEXT();
         printf("1 : New game\n");
         printf("2 : Continue  game\n");
+        printf("3 : Exit \n");
         RESET_TEXT();
         scanf("%d", &mod);
         if (mod == 1)
@@ -103,9 +104,14 @@ void Classic_mod()
             snake_body_classic = snake_init_body(snake_body_classic, LENGTH);
             start_classic_game(snake_body_classic);
         }
-        else
+        else if(mod == 2)
         {
             continue_classic_game(snake_body_classic);
+        }
+        else
+        {
+            system("clear");
+            return ;
         }
     }
     return;
@@ -126,6 +132,7 @@ void Challenge_mod()
         BLUE_TEXT();
         printf("1 : New game\n");
         printf("2 : Continue  game\n");
+        printf("3 : Exit \n");
         RESET_TEXT();
         scanf("%d", &mod);
         if (mod == 1)
@@ -134,9 +141,14 @@ void Challenge_mod()
             snake_obstacle_challenge = init_map(snake_body_challenge, snake_obstacle_challenge);
             challenge_mode_start(snake_body_challenge, snake_obstacle_challenge);
         }
-        else
+        else if(mod == 2)
         {
             continue_challenge_game(snake_body_challenge, snake_obstacle_challenge);
+        }
+        else
+        {
+            system("clear");
+            return ;
         }
     }
 }
@@ -157,6 +169,7 @@ void Power_Up_mod()
         BLUE_TEXT();
         printf("1 : New game\n");
         printf("2 : Continue  game\n");
+        printf("3 : Exit\n");
         RESET_TEXT();
         scanf("%d", &mod);
         if (mod == 1)
@@ -166,9 +179,14 @@ void Power_Up_mod()
             snake_tag_power = init_tag(snake_body_power, snake_tag_power, snake_obstacle_power);
             power_mode_start(snake_body_power, snake_obstacle_power, snake_tag_power);
         }
-        else
+        else if(mod == 2)
         {
             continue_power_game(snake_body_power, snake_obstacle_power, snake_tag_power);
+        }
+        else
+        {
+            system("clear");
+            return ;
         }
     }
 }
@@ -190,5 +208,6 @@ void About_Game()
     printf("按任意键退出...\n");
     getchar();
     getchar();
+    system("clear");
     return ;
 }
