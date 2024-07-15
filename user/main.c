@@ -2,8 +2,8 @@
 
 int main()
 {
+    system("clear");
     chioce_mod();
     snake_destroy();
-    RESET_TEXT();
     return 0;
 }

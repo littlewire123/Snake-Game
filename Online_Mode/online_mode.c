@@ -45,8 +45,7 @@ void start_online_game()
         update_snake_flag = 1;
         if (read_size < 8)
         {
-            printf("too less data\n");
-            continue; // 至少需要8字节来读取长度和数据类型
+            return ; // 至少需要8字节来读取长度和数据类型
         }
 
         int data_length;
