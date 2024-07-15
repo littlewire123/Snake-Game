@@ -2,7 +2,7 @@
 #define __STATIC_H__
 
 #define M 30
-#define N 100   
+#define N 60   
 #define CHANGE_SPEED 5000
 #define LENGTH 3
 #define PATH_CLASSIC "../Game_db/classic_game.db"
