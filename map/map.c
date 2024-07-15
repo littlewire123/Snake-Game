@@ -142,6 +142,7 @@ void print_classic(LLIST *snake_body_find)
     }
 
     YELLOW_TEXT();
+    printf("得分 : %d\n" , snake_body_find->count - LENGTH);
     printf("向上：W，向下：S，向左：A，向右：D 退出并保存：Q\n");
     RESET_TEXT();
     return ;
@@ -195,6 +196,7 @@ void print_challenge(LLIST *snake_body_find, LLIST *snake_obstacle_find)
     }
 
     YELLOW_TEXT();
+    printf("得分 : %d\n" , snake_body_find->count - LENGTH);
     printf("向上：W，向下：S，向左：A，向右：D 退出并保存：Q\n");
     RESET_TEXT();
     return ;
@@ -250,6 +252,7 @@ void print_power(LLIST *snake_body_find, LLIST *snake_obstacle_find, LLIST *snak
     }
 
     YELLOW_TEXT();
+    printf("得分 : %d\n" , snake_body_find->count - LENGTH);
     printf("向上：W，向下：S，向左：A，向右：D 退出并保存：Q\n");
     RESET_TEXT();
     return ;
