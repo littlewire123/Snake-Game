@@ -75,7 +75,7 @@ void print_menu()
     printf("1 : class_mode \n");
     printf("2 : challenge_mode \n");
     printf("3 : power_up_mode \n");
-    printf("4 : Online_mod\n");
+    printf("4 : Online_mode\n");
     printf("5 : About_game\n");
     printf("6 : exit game \n");
     printf("input your mod :");
