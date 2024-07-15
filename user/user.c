@@ -72,7 +72,7 @@ void chioce_mod()
 void print_menu()
 {
     YELLOW_TEXT();
-    printf("1 : class_mode \n");
+    printf("1 : classic_mode \n");
     printf("2 : challenge_mode \n");
     printf("3 : power_up_mode \n");
     printf("4 : Online_mode\n");
