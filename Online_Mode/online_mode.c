@@ -25,6 +25,8 @@ void start_online_game()
     if (connect(client_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0)
     {
         printf("connect failed\n");
+        close(client_fd);
+        end_online_game();
         return;
     }
 

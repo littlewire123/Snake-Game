@@ -65,6 +65,7 @@ void chioce_mod()
         default:
             break;
         }
+        mod  = 0;
     }
     return ;
 }
