@@ -1,11 +1,5 @@
 #include "./map.h"
 
-void print_snake(snake_node *node)
-{
-    printf("x: %d , y: %d", node->x, node->y);
-    putchar(10);
-}
-
 int cmp_node(const void *d1, const void *d2)
 {
     snake_node *nd1 = (snake_node *)d1;
@@ -148,12 +142,15 @@ void print_classic(LLIST *snake_body_find)
     }
 
     YELLOW_TEXT();
+    printf("得分 : %d\n" , snake_body_find->count - LENGTH);
     printf("向上：W，向下：S，向左：A，向右：D 退出并保存：Q\n");
     RESET_TEXT();
+    return ;
 }
 
 void print_challenge(LLIST *snake_body_find, LLIST *snake_obstacle_find)
 {
+    system("clear");
     int i, j;
     for (i = 0; i < M; ++i)
     {
@@ -199,8 +196,10 @@ void print_challenge(LLIST *snake_body_find, LLIST *snake_obstacle_find)
     }
 
     YELLOW_TEXT();
+    printf("得分 : %d\n" , snake_body_find->count - LENGTH);
     printf("向上：W，向下：S，向左：A，向右：D 退出并保存：Q\n");
     RESET_TEXT();
+    return ;
 }
 
 void print_power(LLIST *snake_body_find, LLIST *snake_obstacle_find, LLIST *snake_tag_power_find)
@@ -253,8 +252,10 @@ void print_power(LLIST *snake_body_find, LLIST *snake_obstacle_find, LLIST *snak
     }
 
     YELLOW_TEXT();
+    printf("得分 : %d\n" , snake_body_find->count - LENGTH);
     printf("向上：W，向下：S，向左：A，向右：D 退出并保存：Q\n");
     RESET_TEXT();
+    return ;
 }
 
 LLIST *init_map(LLIST*snake_body_find, LLIST *snake_obstacle_init)
@@ -317,4 +318,5 @@ ERR1:
 void snake_insert_tag(LLIST *snake_tag_insert , snake_node *tag)
 {
     llist_append(snake_tag_insert , tag);
+    return ;
 }

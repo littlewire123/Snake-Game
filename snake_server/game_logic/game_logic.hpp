@@ -22,12 +22,15 @@ public:
     game_logic()
     {
         default_snake_length = 3; // 蛇的默认长度
-        default_width = 100;      // 地图默认宽度
+        default_width = 60;      // 地图默认宽度
         default_height = 30;      // 地图默认高度
         default_max_num = 500;    // 最大大小
         game_mode = CLASSIC;
         max_food = 10;
         max_user = 8;
+        game_speed = 500000;
+        default_game_offset = 5000;
+        min_speed = 200000;
     }
 
     ~game_logic()
@@ -41,6 +44,7 @@ public:
     map<int32_t, user_status> get_user_status();
     food_t get_foods();
     map_t get_map();
+    int32_t get_speed(){return game_speed;}
     bool init_game();
     bool end_game(); // 待设计和完善，暂时用不上
     bool change_direct(int32_t id, direction_t dir);
@@ -69,6 +73,9 @@ private:
     int32_t game_mode;            // 游戏模式
     int32_t max_food;             // 最大食物数量
     int32_t max_user;             // 最大玩家数量
+    int32_t game_speed;           // 游戏速度
+    int32_t default_game_offset;  // 速度变快值
+    int32_t min_speed;            // 最小速度值
 
     bool _check_body(const position_t &pos);
     bool _check_obstacle(const position_t &pos);
@@ -377,6 +384,12 @@ bool game_logic::_move_snake(user_status &user)
         
         ++user.snake.num;
 
+        //改变游戏速度
+        if (game_speed > min_speed)
+        {
+            game_speed -= default_game_offset;
+        }
+
         if (!_update_food(next_pos))
         {
             return false;
@@ -473,6 +486,7 @@ void game_logic::print()
 {
     int i, j;
     position_t pos;
+
     for (i = 0; i < _map.height; ++i)
     {
         for (j = 0; j < _map.width; ++j)

@@ -33,7 +33,6 @@ void chioce_mod()
     srand(time(NULL));
     while(1)
     {
-        //system("clear");
         print_menu();
         int mod;
         scanf("%d",&mod);
@@ -73,10 +72,10 @@ void chioce_mod()
 void print_menu()
 {
     YELLOW_TEXT();
-    printf("1 : class_mode \n");
+    printf("1 : classic_mode \n");
     printf("2 : challenge_mode \n");
     printf("3 : power_up_mode \n");
-    printf("4 : Online_mod\n");
+    printf("4 : Online_mode\n");
     printf("5 : About_game\n");
     printf("6 : exit game \n");
     printf("input your mod :");
@@ -97,6 +96,7 @@ void Classic_mod()
         BLUE_TEXT();
         printf("1 : New game\n");
         printf("2 : Continue  game\n");
+        printf("3 : Exit \n");
         RESET_TEXT();
         scanf("%d", &mod);
         if (mod == 1)
@@ -104,9 +104,14 @@ void Classic_mod()
             snake_body_classic = snake_init_body(snake_body_classic, LENGTH);
             start_classic_game(snake_body_classic);
         }
-        else
+        else if(mod == 2)
         {
             continue_classic_game(snake_body_classic);
+        }
+        else
+        {
+            system("clear");
+            return ;
         }
     }
     return;
@@ -127,6 +132,7 @@ void Challenge_mod()
         BLUE_TEXT();
         printf("1 : New game\n");
         printf("2 : Continue  game\n");
+        printf("3 : Exit \n");
         RESET_TEXT();
         scanf("%d", &mod);
         if (mod == 1)
@@ -135,9 +141,14 @@ void Challenge_mod()
             snake_obstacle_challenge = init_map(snake_body_challenge, snake_obstacle_challenge);
             challenge_mode_start(snake_body_challenge, snake_obstacle_challenge);
         }
-        else
+        else if(mod == 2)
         {
             continue_challenge_game(snake_body_challenge, snake_obstacle_challenge);
+        }
+        else
+        {
+            system("clear");
+            return ;
         }
     }
 }
@@ -158,6 +169,7 @@ void Power_Up_mod()
         BLUE_TEXT();
         printf("1 : New game\n");
         printf("2 : Continue  game\n");
+        printf("3 : Exit\n");
         RESET_TEXT();
         scanf("%d", &mod);
         if (mod == 1)
@@ -167,9 +179,14 @@ void Power_Up_mod()
             snake_tag_power = init_tag(snake_body_power, snake_tag_power, snake_obstacle_power);
             power_mode_start(snake_body_power, snake_obstacle_power, snake_tag_power);
         }
-        else
+        else if(mod == 2)
         {
             continue_power_game(snake_body_power, snake_obstacle_power, snake_tag_power);
+        }
+        else
+        {
+            system("clear");
+            return ;
         }
     }
 }
@@ -185,15 +202,12 @@ void About_Game()
     printf("2 ：挑战模式 ：有一个食物和十个障碍物，速度会更快\n");
     printf("3 ：道具模式 ：有十个食物和十个障碍物，吃到食物有概率获取道具效果(加速、减速、增加3个长度、减小3个长度、随机传送)\n");
     printf("4 ：联机模式 ：经典模式下玩家对抗（其他模式联机模式开发中......）\n\n");
-    printf("单机运行环境：\n");
-    printf("Linux操作系统\n\n");
-    printf("联机运行环境：\n");
-    printf("Linux_x86系统\n\n");
     printf("本项目遵循MIT开源协议；\n");
     printf("项目地址：https://github.com/littlewire123/Snake-Game\n\n");
 
     printf("按任意键退出...\n");
     getchar();
     getchar();
+    system("clear");
     return ;
 }

@@ -1,6 +1,6 @@
 #include "./protocol.h"
 
-void* parse(const char *buffer, int buffer_size)
+void *parse(const char *buffer, int buffer_size)
 {
     if (buffer_size < 8)
         return NULL; // 至少需要8字节来读取长度和数据类型
@@ -31,7 +31,7 @@ void* parse(const char *buffer, int buffer_size)
     }
 }
 
-struct map_t* parse_map(const char *data, int data_size)
+struct map_t *parse_map(const char *data, int data_size)
 {
     if (data_size < sizeof(int) * 3)
         return NULL;
@@ -53,19 +53,21 @@ struct map_t* parse_map(const char *data, int data_size)
 
     if (data_size != expected_size)
     {
-        free(map);
-        return NULL;
-    }
-
-    map->obstacle_pos = (struct position_t *)malloc(position_count * sizeof(struct position_t));
-    if (map->obstacle_pos == NULL)
-    {
+        printf("data_size : %d expected_size : %d" , data_size , expected_size);
+        printf("test\n");
         free(map);
         return NULL;
     }
 
     if (position_count > 0)
     {
+        map->obstacle_pos = (struct position_t *)malloc(position_count * sizeof(struct position_t));
+        if (map->obstacle_pos == NULL)
+        {
+            free(map);
+            return NULL;
+        }
+
         memcpy(map->obstacle_pos, data + offset, position_count * sizeof(struct position_t));
     }
     else
@@ -76,7 +78,7 @@ struct map_t* parse_map(const char *data, int data_size)
     return map;
 }
 
-struct snake_data_t* parse_snake_data(const char *data, int data_size)
+struct snake_data_t *parse_snake_data(const char *data, int data_size)
 {
     if (data_size < sizeof(int) * 2)
         return NULL;
@@ -112,7 +114,7 @@ struct snake_data_t* parse_snake_data(const char *data, int data_size)
     return snake;
 }
 
-struct food_t* parse_food(const char *data, int data_size)
+struct food_t *parse_food(const char *data, int data_size)
 {
     if (data_size < sizeof(int))
         return NULL;
@@ -146,7 +148,7 @@ struct food_t* parse_food(const char *data, int data_size)
     return food;
 }
 
-struct direction_t* parse_direction(const char *data, int data_size)
+struct direction_t *parse_direction(const char *data, int data_size)
 {
     if (data_size != sizeof(struct direction_t))
         return NULL;
@@ -158,6 +160,15 @@ struct direction_t* parse_direction(const char *data, int data_size)
     memcpy(direction, data, sizeof(struct direction_t));
 
     return direction;
+}
+
+int parse_id(const char *data, int data_size)
+{
+    if (data_size != sizeof(int))
+        return -1;
+    int id_t;
+    memcpy(&id_t, data, sizeof(int));
+    return id_t;
 }
 
 char *serialize_map(const struct map_t *data, int *data_size)
@@ -251,10 +262,11 @@ char *serialize_direction(const struct direction_t *data, int *data_size)
     int type = DIRECTION;
     memcpy(chs + offset, &type, sizeof(int)); // 数据类型
     offset += sizeof(int);
+
     memcpy(chs + offset, &data->move_x, sizeof(int));
     offset += sizeof(int);
     memcpy(chs + offset, &data->move_y, sizeof(int));
-
+    offset += sizeof(int);
     return chs;
 }
 
