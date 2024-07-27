@@ -118,19 +118,19 @@ void print_classic(LLIST *snake_body_find)
             if (i == 0 || j == 0 || i == M - 1 || j == N - 1)
             {
                 BLUE_TEXT();
-                printf("#");
+                printf("■");
                 RESET_TEXT();
             }
             else if (snake_find_body(snake_body_find, &find_body, cmp_node) != NULL)
             {
                 GREEN_TEXT();
-                printf("O");
+                printf("⚫");
                 RESET_TEXT();
             }
             else if (i == STATIC_t.tagx && j == STATIC_t.tagy)
             {
                 YELLOW_TEXT();
-                printf("x");
+                printf("❤");
                 RESET_TEXT();
             }
             else
@@ -172,19 +172,19 @@ void print_challenge(LLIST *snake_body_find, LLIST *snake_obstacle_find)
             else if (snake_find_body(snake_body_find, &find_body, cmp_node) != NULL)
             {
                 GREEN_TEXT();
-                printf("O");
+                printf("⚫");
                 RESET_TEXT();
             }
             else if (snake_find_obstacle(snake_obstacle_find, &find_obstacle, cmp_node) != NULL)
             {
                 MAGENTA_TEXT();
-                printf("@");
+                printf("☢");
                 RESET_TEXT();
             }
             else if (i == STATIC_t.tagx && j == STATIC_t.tagy)
             {
                 RED_TEXT();
-                printf("x");
+                printf("❤");
                 RESET_TEXT();
             }
             else
@@ -228,19 +228,19 @@ void print_power(LLIST *snake_body_find, LLIST *snake_obstacle_find, LLIST *snak
             else if (snake_find_body(snake_body_find, &find_body, cmp_node) != NULL)
             {
                 GREEN_TEXT();
-                printf("O");
+                printf("⚫");
                 RESET_TEXT();
             }
             else if (snake_find_obstacle(snake_obstacle_find, &find_obstacle, cmp_node) != NULL)
             {
                 MAGENTA_TEXT();
-                printf("@");
+                printf("☢");
                 RESET_TEXT();
             }
             else if (snake_find_tag(snake_tag_power_find, &find_tag, cmp_node) != NULL)
             {
                 RED_TEXT();
-                printf("x");
+                printf("❤");
                 RESET_TEXT();
             }
             else

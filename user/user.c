@@ -31,11 +31,11 @@ void snake_destroy()
 void chioce_mod()
 {
     srand(time(NULL));
-    while(1)
+    while (1)
     {
         print_menu();
         int mod;
-        scanf("%d",&mod);
+        scanf("%d", &mod);
         switch (mod)
         {
         case 1:
@@ -54,20 +54,23 @@ void chioce_mod()
             }
             else
             {
-                start_online_game();
+                start_online_challenge_game();
             }
             break;
-        case 5:   
-            About_Game();  
-            break ;
+        case 5:
+            About_Game();
+            break;
         case 6:
-            return ;
+            return;
         default:
+            while (getchar() != '\n')
+            { 
+            }
             break;
         }
-        mod  = 0;
+        mod = 0;
     }
-    return ;
+    return;
 }
 
 void print_menu()
@@ -105,14 +108,14 @@ void Classic_mod()
             snake_body_classic = snake_init_body(snake_body_classic, LENGTH);
             start_classic_game(snake_body_classic);
         }
-        else if(mod == 2)
+        else if (mod == 2)
         {
             continue_classic_game(snake_body_classic);
         }
         else
         {
             system("clear");
-            return ;
+            return;
         }
     }
     return;
@@ -142,14 +145,14 @@ void Challenge_mod()
             snake_obstacle_challenge = init_map(snake_body_challenge, snake_obstacle_challenge);
             challenge_mode_start(snake_body_challenge, snake_obstacle_challenge);
         }
-        else if(mod == 2)
+        else if (mod == 2)
         {
             continue_challenge_game(snake_body_challenge, snake_obstacle_challenge);
         }
         else
         {
             system("clear");
-            return ;
+            return;
         }
     }
 }
@@ -180,14 +183,14 @@ void Power_Up_mod()
             snake_tag_power = init_tag(snake_body_power, snake_tag_power, snake_obstacle_power);
             power_mode_start(snake_body_power, snake_obstacle_power, snake_tag_power);
         }
-        else if(mod == 2)
+        else if (mod == 2)
         {
             continue_power_game(snake_body_power, snake_obstacle_power, snake_tag_power);
         }
         else
         {
             system("clear");
-            return ;
+            return;
         }
     }
 }
@@ -210,5 +213,5 @@ void About_Game()
     getchar();
     getchar();
     system("clear");
-    return ;
+    return;
 }
