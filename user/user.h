@@ -8,6 +8,7 @@
 #include "../Power_up_Mode/power_up_mode.h"
 #include "../Online_Mode/Online_Classic/online_classic.h"
 #include "../Online_Mode/Online_Challenge/online_challenge.h"
+#include "../Online_Mode/Online_Power_up/online_power.h"
 
 
 /**
@@ -44,6 +45,9 @@ void Power_Up_mod();
  * @brief 关于游戏
  */
 void About_Game();
+
+void chioce_online_mod();
+void print_online_menu();
 
 
 #endif

@@ -33,6 +33,7 @@ void chioce_mod()
     srand(time(NULL));
     while (1)
     {
+        system("clear");
         print_menu();
         int mod;
         scanf("%d", &mod);
@@ -48,14 +49,8 @@ void chioce_mod()
             Power_Up_mod();
             break;
         case 4:
-            if (!init_online_mode())
-            {
-                printf("online mode init failed\n");
-            }
-            else
-            {
-                start_online_challenge_game();
-            }
+            system("clear");
+            chioce_online_mod();
             break;
         case 5:
             About_Game();
@@ -64,7 +59,7 @@ void chioce_mod()
             return;
         default:
             while (getchar() != '\n')
-            { 
+            {
             }
             break;
         }
@@ -82,6 +77,17 @@ void print_menu()
     printf("4 : Online_mode\n");
     printf("5 : About_game\n");
     printf("6 : exit game \n");
+    printf("input your mod :");
+    RESET_TEXT();
+}
+
+void print_online_menu()
+{
+    YELLOW_TEXT();
+    printf("1 : classic_online_mode \n");
+    printf("2 : challenge_online_mode \n");
+    printf("3 : power_up_online_mode \n");
+    printf("4 : exit\n");
     printf("input your mod :");
     RESET_TEXT();
 }
@@ -193,6 +199,64 @@ void Power_Up_mod()
             return;
         }
     }
+}
+
+void chioce_online_mod()
+{
+    int mod;
+    while (1)
+    {
+        // system("clear");
+        print_online_menu();
+        scanf("%d", &mod);
+        switch (mod)
+        {
+        case 1:
+            system("clear");
+            if (!init_online_mode())
+            {
+                printf("connect false !\n");
+            }
+            else
+            {
+                start_online_game();
+            }
+            break;
+        case 2:
+            system("clear");
+            if (!init_online_challenge_mode())
+            {
+                printf("connect false !\n");
+            }
+            else
+            {
+                start_online_challenge_game();
+            }
+            break;
+        case 3:
+            system("clear");
+            if (!init_online_power_mode())
+            {
+                printf("connect false !\n");
+            }
+            else
+            {
+                start_online_power_game();
+            }
+            break;
+        case 4:
+            return;
+            break;
+        default:
+            while (getchar() != '\n')
+            {
+            }
+            continue;
+            break;
+        }
+        mod = 0;
+    }
+    return;
 }
 
 void About_Game()
