@@ -11,24 +11,27 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 
-int snake_num;
+int snake_num; // 蛇的数量
 
 #define SERVER_IP "120.76.250.20" // 服务器IP地址
 #define SERVER_PORT 8080      // 服务器端口号
 #define BUFFER_SIZE 51200      // 缓冲区大小
 #define MAX_NUMBER 10           //最大玩家数量
 
-struct map_t *map;
-struct food_t *foods;
-struct direction_t *direction;
-struct snake_data_t snake_all_data[MAX_NUMBER];
+struct map_t *map;  // 客户端接受的地图
+struct food_t *foods; // 客户端接受的食物信息
+struct direction_t *direction; //移动方向信息（玩家控制）
+struct snake_data_t snake_all_data[MAX_NUMBER]; // 所有蛇的信息
 
-int update_snake_flag;
+int update_snake_flag; // 获取蛇信息时是否 更新的标致位
 
-struct sockaddr_in server_addr;
+struct sockaddr_in server_addr; 
 int client_fd;
 int id;
 int over_online_game;
+
+pthread_t pthread_get_dir; //处理玩家按下按键的信息线程
+
 
 /**
  * @brief 初始化在线模式，包括创建socket并设置服务器地址结构。
@@ -89,6 +92,9 @@ void send_direct_sign(struct direction_t *dir);
  * @return struct direction_t* 返回玩家控制的方向。
  */
 struct direction_t* get_direct_control();
+
+void *get_dir_classic_pthread(void *data);
+
 
 
 #endif

@@ -2,6 +2,7 @@
     "files.associations": {
         "online_mode.h": "c",
         "user.h": "c",
-        "map.h": "c"
+        "map.h": "c",
+        "protocol.h": "c"
     }
 }

@@ -1,5 +1,20 @@
 #include "./online_classic.h"
 
+void *get_dir_classic_pthread(void *data)
+{
+    while (!over_online_game)
+    {
+        struct direction_t *dir = get_direct_control();
+
+        if (dir != NULL)
+        {
+            send_direct_sign(dir);
+            free(dir);
+        }   
+    }
+    pthread_exit(NULL);
+}
+
 int init_online_mode(void)
 {
     // 创建socket
@@ -30,24 +45,30 @@ void start_online_game()
         return;
     }
 
+    int result;
     int read_size;
     struct snake_data_t *snake_data;
     char buffer[BUFFER_SIZE];
     over_online_game = 0;
+    pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+    //创建处理按键线程
+    result = pthread_create(&pthread_get_dir, NULL, get_dir_classic_pthread, NULL);
+    if (result != 0)
+    {
+        perror("Thread creation failed");
+        end_online_game();
+        return;
+    }
 
     while (!over_online_game)
     {
-        struct direction_t *dir = get_direct_control();
-
-        if (dir != NULL)
-        {
-            send_direct_sign(dir);
-        }
+        //接受服务器发来的各种信息
         read_size = recv(client_fd, buffer, BUFFER_SIZE - 1, 0);
         update_snake_flag = 1;
         if (read_size < 8)
         {
-            return ; // 至少需要8字节来读取长度和数据类型
+            return; // 至少需要8字节来读取长度和数据类型
         }
 
         int data_length;
@@ -66,7 +87,7 @@ void start_online_game()
         int i = 0;
         int offset = 0;
 
-        if(data_num == 0)
+        if (data_num == 0)
         {
             snake_num = 0;
         }
@@ -82,6 +103,7 @@ void start_online_game()
             memcpy(&packets_type, data + offset, sizeof(int));
             offset += sizeof(int);
 
+            pthread_mutex_lock(&mutex);
             switch (packets_type)
             {
             case MAP:
@@ -116,6 +138,7 @@ void start_online_game()
             default:
                 break;
             }
+            pthread_mutex_unlock(&mutex);
 
             offset += data_length;
 
@@ -131,6 +154,8 @@ void start_online_game()
         }
         print_online_map();
     }
+    pthread_mutex_destroy(&mutex);
+    pthread_join(pthread_get_dir, NULL);
 }
 
 void print_online_map()
@@ -153,7 +178,7 @@ void print_online_map()
             if (i == 0 || j == 0 || i == M - 1 || j == N - 1)
             {
                 BLUE_TEXT();
-                printf("#");
+                printf("■");
                 RESET_TEXT();
             }
             else if ((user_id = online_find_body(find_body)) != -1)
@@ -161,24 +186,24 @@ void print_online_map()
                 if (user_id == id)
                 {
                     GREEN_TEXT();
-                    printf("O");
+                    printf("⚫");
                     RESET_TEXT();
                 }
                 else
                 {
-                    printf("O");
+                    printf("◯");
                 }
             }
             else if (online_find_obstacle(find_obstacle) != NULL)
             {
                 MAGENTA_TEXT();
-                printf("@");
+                printf("☢");
                 RESET_TEXT();
             }
             else if (online_find_food(find_food) != NULL)
             {
                 RED_TEXT();
-                printf("x");
+                printf("❤");
                 RESET_TEXT();
             }
             else
@@ -191,6 +216,7 @@ void print_online_map()
 
     YELLOW_TEXT();
     printf("向上：W，向下：S，向左：A，向右：D 退出：Q\n");
+    // free(map);
     RESET_TEXT();
 }
 
@@ -276,6 +302,7 @@ struct direction_t *get_direct_control()
     }
     else
     {
+        free(dir);
         return NULL;
     }
 

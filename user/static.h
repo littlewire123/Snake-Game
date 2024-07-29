@@ -32,10 +32,10 @@ typedef struct static_t{
 }STATIC;
 STATIC STATIC_t;
 
-int obstacle_num;
-int tag_num;
-int power_mod_count;
-int lock_power;
+int obstacle_num; // 障碍物的数量
+int tag_num; //食物的数量
+int power_mod_count; // 道具模式中，蛇获取效果后走的步数
+int lock_power; // 道具模式中,蛇速度变化的一把锁
 
 LLIST * snake_obstacle_challenge; //挑战模式障碍物
 LLIST * snake_obstacle_power; //道具模式障碍物

@@ -1,5 +1,20 @@
 #include "./online_challenge.h"
 
+void *get_dir_challenge_pthread(void *data)
+{
+    while (!over_online_challenge_game)
+    {
+        struct direction_t *dir = get_direct_challenge_control();
+
+        if (dir != NULL)
+        {
+            send_direct_challenge_sign(dir);
+            free(dir);
+        }
+    }
+    pthread_exit(NULL);
+}
+
 int init_online_challenge_mode()
 {
     // 创建socket
@@ -30,24 +45,28 @@ void start_online_challenge_game()
         return;
     }
 
+    int result;
     int read_size;
     struct snake_data_t *snake_data;
     char buffer[BUFFER_SIZE];
     over_online_challenge_game = 0;
+    pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+    result = pthread_create(&pthread_get_dir, NULL, get_dir_challenge_pthread, NULL);
+    if (result != 0)
+    {
+        perror("Thread creation failed");
+        end_online_challenge_game();
+        return;
+    }
 
     while (!over_online_challenge_game)
     {
-        struct direction_t *dir = get_direct_challenge_control();
-
-        if (dir != NULL)
-        {
-            send_direct_challenge_sign(dir);
-        }
         read_size = recv(client_fd, buffer, BUFFER_SIZE - 1, 0);
         update_snake_flag = 1;
         if (read_size < 8)
         {
-            return ; // 至少需要8字节来读取长度和数据类型
+            return; // 至少需要8字节来读取长度和数据类型
         }
 
         int data_length;
@@ -66,7 +85,7 @@ void start_online_challenge_game()
         int i = 0;
         int offset = 0;
 
-        if(data_num == 0)
+        if (data_num == 0)
         {
             snake_num = 0;
         }
@@ -82,6 +101,7 @@ void start_online_challenge_game()
             memcpy(&packets_type, data + offset, sizeof(int));
             offset += sizeof(int);
 
+            pthread_mutex_lock(&mutex);
             switch (packets_type)
             {
             case MAP:
@@ -116,6 +136,7 @@ void start_online_challenge_game()
             default:
                 break;
             }
+            pthread_mutex_unlock(&mutex);
 
             offset += data_length;
 
@@ -129,6 +150,7 @@ void start_online_challenge_game()
             }
             i++;
         }
+        pthread_mutex_destroy(&mutex);
         print_online_challenge_map();
     }
 }
@@ -281,7 +303,7 @@ void send_direct_challenge_sign(struct direction_t *dir)
     send(client_fd, buff, total_lenth, 0);
 }
 
-struct direction_t* get_direct_challenge_control()
+struct direction_t *get_direct_challenge_control()
 {
     struct direction_t *dir;
     dir = (struct direction_t *)malloc(sizeof(struct direction_t));
@@ -316,6 +338,7 @@ struct direction_t* get_direct_challenge_control()
     }
     else
     {
+        free(dir);
         return NULL;
     }
 

@@ -4,12 +4,15 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <pthread.h>
 
 #define MAP 0
 #define SNAKE 1
 #define FOOD 2
 #define DIRECTION 3
 #define ID 4
+
+
 
 // 地图
 struct map_t

@@ -221,7 +221,7 @@ void chioce_online_mod()
             {
                 start_online_game();
             }
-            break;
+            return;
         case 2:
             system("clear");
             if (!init_online_challenge_mode())
@@ -232,7 +232,7 @@ void chioce_online_mod()
             {
                 start_online_challenge_game();
             }
-            break;
+            return;
         case 3:
             system("clear");
             if (!init_online_power_mode())
@@ -243,10 +243,9 @@ void chioce_online_mod()
             {
                 start_online_power_game();
             }
-            break;
+            return;
         case 4:
             return;
-            break;
         default:
             while (getchar() != '\n')
             {

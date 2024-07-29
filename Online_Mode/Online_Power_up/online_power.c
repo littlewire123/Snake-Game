@@ -1,5 +1,20 @@
 #include "./online_power.h"
 
+void *get_dir_power_pthread(void *data)
+{
+    while (!over_online_power_game)
+    {
+        struct direction_t *dir = get_direct_power_control();
+
+        if (dir != NULL)
+        {
+            send_direct_power_sign(dir);
+            free(dir);
+        }
+    }
+    pthread_exit(NULL);
+}
+
 int init_online_power_mode()
 {
     // 创建socket
@@ -31,19 +46,23 @@ void start_online_power_game()
         return;
     }
 
+    int result;
     int read_size;
     struct snake_data_t *snake_data;
     char buffer[BUFFER_SIZE];
     over_online_power_game = 0;
+    pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+    result = pthread_create(&pthread_get_dir, NULL, get_dir_power_pthread, NULL);
+    if (result != 0)
+    {
+        perror("Thread creation failed");
+        end_online_power_game();
+        return;
+    }
 
     while (!over_online_power_game)
     {
-        struct direction_t *dir = get_direct_power_control();
-
-        if (dir != NULL)
-        {
-            send_direct_power_sign(dir);
-        }
         read_size = recv(client_fd, buffer, BUFFER_SIZE - 1, 0);
         update_snake_flag = 1;
         if (read_size < 8)
@@ -83,6 +102,7 @@ void start_online_power_game()
             memcpy(&packets_type, data + offset, sizeof(int));
             offset += sizeof(int);
 
+            pthread_mutex_lock(&mutex);
             switch (packets_type)
             {
             case MAP:
@@ -117,6 +137,7 @@ void start_online_power_game()
             default:
                 break;
             }
+            pthread_mutex_unlock(&mutex);
 
             offset += data_length;
 
@@ -132,6 +153,8 @@ void start_online_power_game()
         }
         print_online_power_map();
     }
+    pthread_mutex_destroy(&mutex);
+    pthread_join(pthread_get_dir, NULL);
 }
 
 
@@ -324,6 +347,7 @@ struct direction_t* get_direct_power_control()
     }
     else
     {
+        free(dir);
         return NULL;
     }
 
