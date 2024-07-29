@@ -5,6 +5,8 @@
 #include <map>
 #include <mutex>
 #include <set>
+#include <time.h>
+#include "../protocol/protocol.hpp"
 
 using namespace std;
 
@@ -29,6 +31,7 @@ public:
         max_food = 10;
         max_user = 8;
         cur_step = 0;
+        srand(time(NULL));
         /*
         game_speed = 500000;
         default_game_offset = 5000;
@@ -57,16 +60,20 @@ public:
     static const int32_t CLASSIC = 0;
     static const int32_t CHALLENGE = 1;
     static const int32_t POWER_UP = 2;
-    static const int32_t MOVE_STEP = 3; // 默认更新移动次数，即检验次数到达3后才移动没有特殊效果的蛇
+    static const int32_t MOVE_STEP = 3;         // 默认更新移动次数，即检验次数到达后才移动没有特殊效果的蛇
+    static const int32_t SPEED_UP_STEP = 40;    // 加速生效步数
+    static const int32_t SPEED_DOWN_STEP = 80;  // 减速生效步数
+    static const int32_t SHORTER_NUM = 3;       // 变短数量
+    static const int32_t LONGER_NUM = 3;        // 变长数量
 
     // test
     void print();
 
 private:
-    map<int32_t, user_status> _status;
-    vector<int32_t> _dead_user;
-    set<int32_t> buff_users;   // 吃到增益的用户
-    set<int32_t> debuff_users; // 吃到减益的用户
+    map<int32_t, user_status> _status;      // 存储用户状态，主键用户id，值为用户状态结构体
+    vector<int32_t> _dead_user;             // 死亡的用户名单
+    map<int32_t, int32_t> speed_up_users;   // 吃到增益的用户，主键用户id，值为生效次数（调用move函数的次数）
+    map<int32_t, int32_t> speed_down_users; // 吃到减益的用户，主键用户id，值为生效次数（调用move函数的次数）
 
     food_t _foods;
     map_t _map;
@@ -91,8 +98,10 @@ private:
     bool _check_point_safe(const position_t &pos);
 
     bool _add_snake_body(int32_t id, const position_t &pos);
-    bool _move_snake(user_status &user); // 这里可以考虑加一个锁，用于同步读写
+    bool _move_snake(user_status &user);
     bool _remove_user(int32_t id);
+
+    position_t _make_point();
 
     // 障碍物处理函数
     position_t _make_obstacle();
@@ -107,6 +116,10 @@ private:
     position_t _make_food();
     bool _update_food(const position_t &pos);
     bool _add_food(const position_t &food);
+
+    // 道具模式内部函数
+    bool get_random_effect(user_status &user);
+    void update_buff_count();
 
     bool _init_classic_game();
     bool _init_challenge_game();
@@ -176,6 +189,11 @@ position_t *game_logic::_find_food(const position_t &pos)
 }
 
 position_t game_logic::_make_food()
+{
+    return _make_point();
+}
+
+position_t game_logic::_make_point()
 {
     position_t pos;
     pos.x = (rand() % (_map.width - 2)) + 1;
@@ -307,17 +325,7 @@ bool game_logic::_add_obstacle(const position_t &pos)
 
 position_t game_logic::_make_obstacle()
 {
-    position_t pos;
-    pos.x = (rand() % (_map.width - 2)) + 1;
-    pos.y = (rand() % (_map.height - 2)) + 1;
-
-    while (_find_food(pos) != nullptr || !_check_point_safe(pos))
-    {
-        pos.x = (rand() % (_map.width - 2)) + 1;
-        pos.y = (rand() % (_map.height - 2)) + 1;
-    }
-
-    return pos;
+    return _make_point();
 }
 
 position_t *game_logic::_find_obstacle(const position_t &pos)
@@ -464,13 +472,16 @@ bool game_logic::_remove_user(int32_t id)
 
 bool game_logic::_move_snake(user_status &user)
 {
-    //还差处理道具模式的移动判断，通过cur_step和MOVE_STEP判断
-    if (game_mode != POWER_UP && cur_step < MOVE_STEP)
+    // 处理道具模式的移动判断，通过cur_step和MOVE_STEP判断
+    if (game_mode != POWER_UP && cur_step % MOVE_STEP != 0)
     {
-        ++cur_step;
         return true;
     }
-    cur_step = 0;
+    else if ((speed_down_users.find(user.snake.id) != speed_down_users.end() && cur_step != 0) 
+            || (cur_step % MOVE_STEP != 0 && speed_up_users.find(user.snake.id) == speed_up_users.end()))
+    {
+        return true;
+    }
 
     position_t next_pos;
     /*
@@ -490,10 +501,18 @@ bool game_logic::_move_snake(user_status &user)
     // 吃到食物
     if (_find_food(next_pos) != nullptr)
     {
-        memmove(user.snake.snake_pos + 1, user.snake.snake_pos, user.snake.num * sizeof(position_t));
-        user.snake.snake_pos[0] = next_pos;
+        if (user.snake.num < default_max_num)
+        {
+            memmove(user.snake.snake_pos + 1, user.snake.snake_pos, user.snake.num * sizeof(position_t));
+            user.snake.snake_pos[0] = next_pos;
 
-        ++user.snake.num;
+            ++user.snake.num;
+        }
+        // 如果是道具模式就过去随机效果
+        if (game_mode == POWER_UP)
+        {
+            get_random_effect(user);
+        }
 
         // 改变游戏速度
         if (game_speed > min_speed)
@@ -501,10 +520,7 @@ bool game_logic::_move_snake(user_status &user)
             game_speed -= default_game_offset;
         }
 
-        if (!_update_food(next_pos))
-        {
-            return false;
-        }
+        _update_food(next_pos);
     }
     else
     {
@@ -517,6 +533,99 @@ bool game_logic::_move_snake(user_status &user)
     }
 
     return true;
+}
+
+bool game_logic::get_random_effect(user_status &user)
+{
+    int rand_num = rand() % 100;
+
+    if (rand_num < 50)
+    {
+        return true;
+    }
+    else if (rand_num < 60)
+    {
+        // 加速
+        speed_up_users[user.snake.id] = SPEED_UP_STEP;
+    }
+    else if (rand_num < 70)
+    {
+        // 减速
+        speed_down_users[user.snake.id] = SPEED_DOWN_STEP;
+    }
+    else if (rand_num < 80)
+    {
+        // 变长
+        // 计算尾巴朝向，用最后一个点的坐标减去倒数第二点的坐标
+        direction_t dir = {user.snake.snake_pos[user.snake.num - 1].x - user.snake.snake_pos[user.snake.num - 2].x,
+                           user.snake.snake_pos[user.snake.num - 1].y - user.snake.snake_pos[user.snake.num - 2].y};
+
+        for (int i = 0; i < LONGER_NUM; ++i)
+        {
+            position_t next_pos = {user.snake.snake_pos[user.snake.num - 1].x + dir.move_x,
+                                   user.snake.snake_pos[user.snake.num - 1].y + dir.move_y};
+
+            if (_check_point_safe(next_pos))
+            {
+                if (user.snake.num < default_max_num)
+                {
+                    user.snake.snake_pos[user.snake.num] = next_pos;
+                    ++user.snake.num;
+                }
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
+    else if (rand_num < 90)
+    {
+        // 变短
+        if (user.snake.num > default_snake_length)
+        {
+            user.snake.num -= SHORTER_NUM;
+        }
+    }
+    else
+    {
+        // 传送
+        position_t pos = _make_point();
+        user.snake.snake_pos[0] = pos;
+    }
+
+    return true;
+}
+
+void game_logic::update_buff_count()
+{
+    // 更新加速buff
+    for (auto iter = speed_up_users.begin(); iter != speed_up_users.end();)
+    {
+        --iter->second;
+        if (iter->second <= 0)
+        {
+            iter = speed_up_users.erase(iter);
+        }
+        else
+        {
+            ++iter;
+        }
+    }
+
+    // 更新减速debuff
+    for (auto iter = speed_down_users.begin(); iter != speed_down_users.end();)
+    {
+        --iter->second;
+        if (iter->second <= 0)
+        {
+            iter = speed_down_users.erase(iter);
+        }
+        else
+        {
+            ++iter;
+        }
+    }
 }
 
 bool game_logic::change_direct(int32_t id, direction_t dir)
@@ -565,14 +674,10 @@ bool game_logic::move()
         {
             // 记录死亡用户
             _dead_user.push_back(iter->first);
-
             /*
              *失败时的其他处理
              */
         }
-
-        cout << "snake id : " << iter->first << endl;
-
         ++i; // 检测是否还有玩家
     }
 
@@ -582,6 +687,13 @@ bool game_logic::move()
     }
 
     _dead_user.clear();
+    // 更新buff状态
+    if (game_mode == POWER_UP)
+    {
+        update_buff_count();
+    }
+    cur_step = (cur_step >= 2 * MOVE_STEP - 1 ? 0 : cur_step + 1);
+
     return i > 0;
 }
 

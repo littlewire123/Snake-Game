@@ -1,10 +1,12 @@
 #include "./game_logic/game_logic.hpp"
 #include <time.h>
+#include <iostream>
 using namespace std;
+
 int main()
 {
     srand(time(NULL));
-    game_logic game(game_logic::CHALLENGE);
+    game_logic game(game_logic::POWER_UP);
     
 
     if (!game.init_game())
@@ -14,13 +16,13 @@ int main()
     int i = 0;
     cout<<"244"<<endl;
 
-    while (game.add_user(i))
+    /*while (game.add_user(i))
     {
         ++i;
         cout<<"123"<<endl;
-    }
+    }*/
 
-    //game.add_user(1);
+    game.add_user(1);
 
     game.print();
     getchar();

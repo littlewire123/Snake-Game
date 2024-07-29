@@ -331,7 +331,7 @@ void TcpServer::send_snakes_and_foods_data(int client)
 void TcpServer::run()
 {
     // 初始化游戏
-    classic_game.set_mode(game_logic::CHALLENGE);
+    classic_game.set_mode(game_logic::POWER_UP);
     if (!classic_game.init_game())
     {
         cout << "game init failed\n";
