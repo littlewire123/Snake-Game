@@ -1,6 +1,8 @@
 {
     "files.associations": {
         "online_mode.h": "c",
-        "user.h": "c"
+        "user.h": "c",
+        "iostream": "cpp",
+        "ostream": "cpp"
     }
 }

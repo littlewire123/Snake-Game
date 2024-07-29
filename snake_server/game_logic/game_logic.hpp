@@ -1,10 +1,10 @@
 #ifndef _GAME_LOGIC_H
 #define _GAME_LOGIC_H
 
-#include "../protocol/protocol.hpp"
 #include <vector>
 #include <map>
 #include <mutex>
+#include <set>
 
 using namespace std;
 
@@ -19,18 +19,21 @@ struct user_status
 class game_logic
 {
 public:
-    game_logic()
+    game_logic(int32_t mode = CLASSIC)
     {
         default_snake_length = 3; // 蛇的默认长度
-        default_width = 60;      // 地图默认宽度
+        default_width = 60;       // 地图默认宽度
         default_height = 30;      // 地图默认高度
         default_max_num = 500;    // 最大大小
-        game_mode = CLASSIC;
+        game_mode = mode;
         max_food = 10;
         max_user = 8;
+        cur_step = 0;
+        /*
         game_speed = 500000;
         default_game_offset = 5000;
         min_speed = 200000;
+        */
     }
 
     ~game_logic()
@@ -39,12 +42,11 @@ public:
         delete[] _map.obstacle_pos;
     }
 
-    game_logic(int32_t mode) : game_mode(mode) {}
-
     map<int32_t, user_status> get_user_status();
     food_t get_foods();
     map_t get_map();
-    int32_t get_speed(){return game_speed;}
+    void set_mode(int32_t mode) { game_mode = mode; }
+    int32_t get_speed() { return game_speed; }
     bool init_game();
     bool end_game(); // 待设计和完善，暂时用不上
     bool change_direct(int32_t id, direction_t dir);
@@ -55,15 +57,20 @@ public:
     static const int32_t CLASSIC = 0;
     static const int32_t CHALLENGE = 1;
     static const int32_t POWER_UP = 2;
+    static const int32_t MOVE_STEP = 3; // 默认更新移动次数，即检验次数到达3后才移动没有特殊效果的蛇
 
     // test
     void print();
 
 private:
     map<int32_t, user_status> _status;
-    vector<user_status> _dead_user;
+    vector<int32_t> _dead_user;
+    set<int32_t> buff_users;   // 吃到增益的用户
+    set<int32_t> debuff_users; // 吃到减益的用户
+
     food_t _foods;
     map_t _map;
+
     mutex _direction_mtx;
 
     int32_t default_snake_length; // 蛇的默认长度
@@ -76,6 +83,8 @@ private:
     int32_t game_speed;           // 游戏速度
     int32_t default_game_offset;  // 速度变快值
     int32_t min_speed;            // 最小速度值
+    int32_t max_obstacle;         // 最大障碍物数量
+    int32_t cur_step;             // 用于判断是否满足移动条件
 
     bool _check_body(const position_t &pos);
     bool _check_obstacle(const position_t &pos);
@@ -85,7 +94,10 @@ private:
     bool _move_snake(user_status &user); // 这里可以考虑加一个锁，用于同步读写
     bool _remove_user(int32_t id);
 
+    // 障碍物处理函数
+    position_t _make_obstacle();
     bool _add_obstacle(const position_t &pos); // 待完善
+    position_t *_find_obstacle(const position_t &pos);
 
     // 用户处理函数
     user_status _init_user_data(int32_t id);
@@ -97,6 +109,8 @@ private:
     bool _add_food(const position_t &food);
 
     bool _init_classic_game();
+    bool _init_challenge_game();
+    bool _init_power_up_game();
 };
 
 map<int32_t, user_status> game_logic::get_user_status()
@@ -184,7 +198,11 @@ bool game_logic::init_game()
     case CLASSIC:
         ret = _init_classic_game();
         break;
-
+    case CHALLENGE:
+        ret = _init_challenge_game();
+        break;
+    case POWER_UP:
+        ret = _init_power_up_game();
     default:
         break;
     }
@@ -194,6 +212,9 @@ bool game_logic::init_game()
 
 bool game_logic::_init_classic_game()
 {
+    game_speed = 500000;
+    default_game_offset = 5000;
+    min_speed = 200000;
     // 初始化地图
     _map.height = default_height;
     _map.width = default_width;
@@ -213,6 +234,103 @@ bool game_logic::_init_classic_game()
 
     _add_food(food);
     return true;
+}
+
+bool game_logic::_init_challenge_game()
+{
+    game_speed = 300000;
+    default_game_offset = 5000;
+    min_speed = 100000;
+    max_obstacle = 10;
+    // 初始化地图
+    _map.height = default_height;
+    _map.width = default_width;
+    _map.num = 0;
+    _foods.num = 0;
+    _map.obstacle_pos = new position_t[max_obstacle];
+    if (_map.obstacle_pos == nullptr)
+    {
+        return false;
+    }
+
+    for (int i = 0; i < max_obstacle; ++i)
+    {
+        _add_obstacle(_make_obstacle());
+    }
+
+    // 初始化食物
+    _foods.foods = new position_t[max_food];
+
+    if (_foods.foods == nullptr)
+    {
+        return false;
+    }
+
+    for (int i = 0; i < max_food; ++i)
+    {
+        _add_food(_make_food());
+    }
+
+    return true;
+}
+
+bool game_logic::_init_power_up_game()
+{
+    return _init_challenge_game();
+}
+
+bool game_logic::_add_food(const position_t &food)
+{
+    if (_foods.num >= max_food)
+    {
+        return false;
+    }
+
+    _foods.foods[_foods.num] = food;
+    ++_foods.num;
+
+    return true;
+}
+
+bool game_logic::_add_obstacle(const position_t &pos)
+{
+    if (_map.num >= max_obstacle)
+    {
+        return false;
+    }
+
+    _map.obstacle_pos[_map.num] = pos;
+    ++_map.num;
+
+    return true;
+}
+
+position_t game_logic::_make_obstacle()
+{
+    position_t pos;
+    pos.x = (rand() % (_map.width - 2)) + 1;
+    pos.y = (rand() % (_map.height - 2)) + 1;
+
+    while (_find_food(pos) != nullptr || !_check_point_safe(pos))
+    {
+        pos.x = (rand() % (_map.width - 2)) + 1;
+        pos.y = (rand() % (_map.height - 2)) + 1;
+    }
+
+    return pos;
+}
+
+position_t *game_logic::_find_obstacle(const position_t &pos)
+{
+    for (int i = 0; i < _map.num; ++i)
+    {
+        if (_map.obstacle_pos[i].x == pos.x && _map.obstacle_pos[i].y == pos.y)
+        {
+            return &_map.obstacle_pos[i];
+        }
+    }
+
+    return nullptr;
 }
 
 user_status game_logic::_init_user_data(int32_t id)
@@ -289,19 +407,6 @@ user_status game_logic::_init_user_data(int32_t id)
     return status;
 }
 
-bool game_logic::_add_food(const position_t &food)
-{
-    if (_foods.num >= max_food)
-    {
-        return false;
-    }
-
-    _foods.foods[_foods.num] = food;
-    ++_foods.num;
-
-    return true;
-}
-
 bool game_logic::add_user(int32_t id)
 {
     if (_status.size() >= max_user)
@@ -316,8 +421,7 @@ bool game_logic::add_user(int32_t id)
     }
 
     // 生成更多食物
-    position_t food = _make_food();
-    _add_food(food);
+    _add_food(_make_food());
 
     return true;
 }
@@ -360,6 +464,14 @@ bool game_logic::_remove_user(int32_t id)
 
 bool game_logic::_move_snake(user_status &user)
 {
+    //还差处理道具模式的移动判断，通过cur_step和MOVE_STEP判断
+    if (game_mode != POWER_UP && cur_step < MOVE_STEP)
+    {
+        ++cur_step;
+        return true;
+    }
+    cur_step = 0;
+
     position_t next_pos;
     /*
      *这里加一个锁，用于同步读写
@@ -367,9 +479,8 @@ bool game_logic::_move_snake(user_status &user)
     {
         lock_guard<mutex> lock(_direction_mtx);
         next_pos = {user.snake.snake_pos[0].x + user.move_x,
-                               user.snake.snake_pos[0].y + user.move_y};
+                    user.snake.snake_pos[0].y + user.move_y};
     }
-
 
     // 死亡
     if (!_check_point_safe(next_pos))
@@ -381,10 +492,10 @@ bool game_logic::_move_snake(user_status &user)
     {
         memmove(user.snake.snake_pos + 1, user.snake.snake_pos, user.snake.num * sizeof(position_t));
         user.snake.snake_pos[0] = next_pos;
-        
+
         ++user.snake.num;
 
-        //改变游戏速度
+        // 改变游戏速度
         if (game_speed > min_speed)
         {
             game_speed -= default_game_offset;
@@ -420,11 +531,11 @@ bool game_logic::change_direct(int32_t id, direction_t dir)
     /*
     加锁
     */
-   {
+    {
         lock_guard<mutex> lock(_direction_mtx);
         iter->second.move_x = dir.move_x;
         iter->second.move_y = dir.move_y;
-   }
+    }
 
     return true;
 }
@@ -448,28 +559,26 @@ bool game_logic::move()
 {
     int i = 0;
 
-    cout<<"foods : "<<_foods.num<<endl;
-
     for (auto iter = _status.begin(); iter != _status.end(); ++iter)
     {
         if (!_move_snake(iter->second))
         {
-            //记录死亡用户
-            _dead_user.push_back(iter->second);
+            // 记录死亡用户
+            _dead_user.push_back(iter->first);
 
             /*
              *失败时的其他处理
              */
         }
 
-        cout<<"snake id : "<<iter->second.snake.id<<endl;
-        
+        cout << "snake id : " << iter->first << endl;
+
         ++i; // 检测是否还有玩家
     }
 
-    for (auto user:_dead_user)
+    for (auto id : _dead_user)
     {
-        _remove_user(user.snake.id);
+        _remove_user(id);
     }
 
     _dead_user.clear();
@@ -504,6 +613,10 @@ void game_logic::print()
             else if (_find_food(pos) != nullptr)
             {
                 printf("x");
+            }
+            else if (!_check_obstacle(pos))
+            {
+                printf("@");
             }
             else
             {

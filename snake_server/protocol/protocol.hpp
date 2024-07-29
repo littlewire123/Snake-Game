@@ -43,11 +43,19 @@ struct position_t
     int32_t y;
 };
 
+//房间信息
+struct room_t
+{
+    int id;     //0表示客户端创建房间，id无效，正数表示有效id
+    int model;  //游戏模式0：经典模式，1：挑战模式，2：道具模式
+};
+
 const static int MAP = 0;
 const static int SNAKE = 1;
 const static int FOOD = 2;
 const static int DIRECTION = 3;
 const static int ID = 4;
+const static int ROOM = 5;
 
 // Protocol 类定义
 class Protocol
@@ -68,12 +76,14 @@ private:
     char *serialize_impl(const direction_t &data, int32_t &data_size);
     char *serialize_impl(const snake_data_t &data, int32_t &data_size);
     char *serialize_impl(const int32_t &data, int32_t &data_size);
+    char *serialize_impl(const room_t &data, int32_t &data_size);
 
     // 解析
     map_t *parse_map(const char *data, int32_t data_size);
     snake_data_t *parse_snake_data(const char *data, int32_t data_size);
     food_t *parse_food(const char *data, int32_t data_size);
     direction_t *parse_direction(const char *data, int32_t data_size);
+    room_t *parse_room(const char *data, int32_t data_size);
 };
 
 template <typename T>
@@ -106,6 +116,8 @@ void *Protocol::parse(const char *buffer, int32_t buffer_size)
         return parse_food(data, data_length);
     case DIRECTION:
         return parse_direction(data, data_length);
+    case ROOM:
+        return parse_room(data, data_length);
     default:
         return nullptr;
     }
@@ -116,6 +128,10 @@ template <typename T>
 T *Protocol::deserialize(const char *data, int32_t data_size)
 {
     T *value = new T;
+    if (value == nullptr)
+    {
+        return nullptr;
+    }
     memcpy(value, data, data_size);
     return value;
 }
@@ -226,6 +242,11 @@ snake_data_t *Protocol::parse_snake_data(const char *data, int32_t data_size)
     memcpy(snake->snake_pos, data + offset, position_count * sizeof(position_t));
 
     return snake;
+}
+
+room_t *Protocol::parse_room(const char *data, int32_t data_size)
+{
+    return deserialize<room_t>(data, data_size);
 }
 
 food_t *Protocol::parse_food(const char *data, int32_t data_size)
@@ -397,6 +418,27 @@ char *Protocol::serialize_impl(const direction_t &data, int32_t &data_size)
     memcpy(chs + offset, &data.move_x, sizeof(int));
     offset += sizeof(int);
     memcpy(chs + offset, &data.move_y, sizeof(int));
+
+    return chs;
+}
+
+char *Protocol::serialize_impl(const room_t &data, int32_t &data_size)
+{
+    data_size = sizeof(int) * 2 + 8;
+    int32_t cur_size = data_size - 8;
+
+    char *chs = new char[data_size];
+    if (chs == nullptr)
+    {
+        return nullptr;
+    }
+
+    int32_t offset = 0;
+    memcpy(chs + offset, &cur_size, sizeof(int32_t)); // 数据长度
+    offset += sizeof(int32_t);
+    memcpy(chs + offset, &ROOM, sizeof(int)); // 数据类型
+    offset += sizeof(int);
+    memcpy(chs + offset, &data, sizeof(room_t));
 
     return chs;
 }

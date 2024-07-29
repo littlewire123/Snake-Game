@@ -46,8 +46,9 @@ private:
     int epoll_fd;
     const static int MAX_EVENTS = 10;
     struct epoll_event events[MAX_EVENTS];
-    game_logic game; // 未初始化会报错,调用析构时free异常
-    bool stop;       // 保留控制位，控制服务器启停
+    game_logic classic_game; // 未初始化会报错,调用析构时free异常
+    game_logic challenge_game;
+    bool stop; // 保留控制位，控制服务器启停
 
     Protocol protocol;
 
@@ -58,6 +59,7 @@ private:
 
     mutex connection_mtx;          // 锁，防止竞态
     map<int, int32_t> connections; // 存放连接状态
+    map<int, game_logic> rooms;    // 存放房间
 };
 
 TcpServer::TcpServer(const std::string &ip, int port)
@@ -192,7 +194,7 @@ void TcpServer::acceptConnections()
                 {
                     std::lock_guard<std::mutex> lock(connection_mtx);
                     id = make_id();
-                    if (!game.add_user(id))
+                    if (!classic_game.add_user(id))
                     {
                         // 错误处理，回发客户端错误码，发一个总长度为0的数据包
                         cout << "add User failed\n";
@@ -226,7 +228,7 @@ void TcpServer::acceptConnections()
                 delete[] temp;
 
                 // 写入地图数据包
-                temp = protocol.serialize(game.get_map(), data_size);
+                temp = protocol.serialize(classic_game.get_map(), data_size);
                 memcpy(send_id_and_map_buff + offset, temp, data_size);
                 offset += data_size;
                 // 写入包分隔符
@@ -255,18 +257,18 @@ void TcpServer::acceptConnections()
 
 void TcpServer::send_snakes_and_foods_data(int client)
 {
-    map<int32_t, user_status> users = game.get_user_status();
-    food_t foods = game.get_foods();
+    map<int32_t, user_status> users = classic_game.get_user_status();
+    food_t foods = classic_game.get_foods();
 
     int32_t pack_num = users.size() + 1;
     char ch = '\0';               // 包之间的分隔符
     int offset = sizeof(int32_t); // 预留总数据长的的位置；
-    
+
     int32_t data_size;
-    //没有蛇的情况
+    // 没有蛇的情况
     if (users.size() <= 0)
     {
-        //发送一个空数据
+        // 发送一个空数据
         pack_num = 0;
         memcpy(send_buff + offset, &pack_num, sizeof(int32_t));
         offset += sizeof(int32_t);
@@ -329,7 +331,8 @@ void TcpServer::send_snakes_and_foods_data(int client)
 void TcpServer::run()
 {
     // 初始化游戏
-    if (!game.init_game())
+    classic_game.set_mode(game_logic::CHALLENGE);
+    if (!classic_game.init_game())
     {
         cout << "game init failed\n";
         return;
@@ -346,15 +349,11 @@ void TcpServer::run()
     while (true)
     {
         map<int32_t, user_status> users;
-        // game.move();
+        // classic_game.move();
 
-        if (count >= 3)
-        {
-            game.move();
-            count = 0;
-        }
+        classic_game.move();
 
-        users = game.get_user_status();
+        users = classic_game.get_user_status();
 
         // 发送用户的蛇位置数据
         for (auto user : connections)
@@ -364,9 +363,9 @@ void TcpServer::run()
 
         printf("user num : %d\n", connections.size());
 
-        game.print();
+        classic_game.print();
 
-        usleep(game.get_speed() / 3);
+        usleep(classic_game.get_speed() / game_logic::MOVE_STEP);
 
         ++count;
     }
@@ -434,7 +433,7 @@ void TcpServer::handleClientData(int client_fd)
 
                 if (iter != connections.end())
                 {
-                    game.change_direct(iter->second, *dir);
+                    classic_game.change_direct(iter->second, *dir);
                 }
 
                 printf("move_x : %d, move_y : %d\n", dir->move_x, dir->move_y);
