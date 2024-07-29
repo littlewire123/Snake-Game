@@ -289,3 +289,11 @@ char *serialize_id(const int *data, int *data_size)
 
     return chs;
 }
+
+void get_terminal_size_online(int *rows, int *cols)
+{
+    struct winsize ws;
+    ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws);
+    *rows = ws.ws_row;
+    *cols = ws.ws_col;
+}

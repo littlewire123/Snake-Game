@@ -104,11 +104,38 @@ int check_tag(LLIST *snake_tag_chech, snake_node *node)
     return 1;
 }
 
+void get_terminal_size_single(int *rows, int *cols)
+{
+    struct winsize ws;
+    ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws);
+    *rows = ws.ws_row;
+    *cols = ws.ws_col;
+}
+
 void print_classic(LLIST *snake_body_find)
 {
+    // 保存光标位置
+    printf("\0337");
+
+    // 隐藏光标
+    printf("\033[?25l");
+
+    int term_rows, term_cols;
+    get_terminal_size_single(&term_rows, &term_cols);
+
+    int offset_x = (term_cols - N) / 2;
+    int offset_y = (term_rows - M) / 2;
+
     int i, j;
+    for (i = 0; i < offset_y; ++i)
+    {
+        printf("\n"); // 在顶部打印适当数量的空行，以实现垂直居中
+    }
+
     for (i = 0; i < M; ++i)
     {
+        printf("%*s", offset_x, ""); // 在每行前打印适当数量的空格，以实现水平居中
+
         for (j = 0; j < N; ++j)
         {
             snake_node find_body;
@@ -118,7 +145,7 @@ void print_classic(LLIST *snake_body_find)
             if (i == 0 || j == 0 || i == M - 1 || j == N - 1)
             {
                 BLUE_TEXT();
-                printf("■");
+                printf("#");
                 RESET_TEXT();
             }
             else if (snake_find_body(snake_body_find, &find_body, cmp_node) != NULL)
@@ -141,19 +168,51 @@ void print_classic(LLIST *snake_body_find)
         printf("\n");
     }
 
+    printf("%*s", offset_x, ""); // 在得分行前打印适当数量的空格，以实现水平居中
     YELLOW_TEXT();
-    printf("得分 : %d\n" , snake_body_find->count - LENGTH);
+    printf("得分 : %d\n", snake_body_find->count - LENGTH);
+    printf("%*s", offset_x, ""); // 在控制提示行前打印适当数量的空格，以实现水平居中
     printf("向上：W，向下：S，向左：A，向右：D 退出并保存：Q\n");
     RESET_TEXT();
-    return ;
+
+    // 恢复光标位置
+    printf("\0338");
+
+    // 显示光标
+    printf("\033[?25h");
+
+    fflush(stdout);
+
+    return;
 }
 
 void print_challenge(LLIST *snake_body_find, LLIST *snake_obstacle_find)
 {
+    // 隐藏光标
+    printf("\033[?25l");
+
+    // 保存光标位置
+    printf("\0337");
+
+    // 清屏
     system("clear");
+
+    int term_rows, term_cols;
+    get_terminal_size_single(&term_rows, &term_cols);
+
+    int offset_x = (term_cols - N) / 2;
+    int offset_y = (term_rows - M) / 2;
+
     int i, j;
+    for (i = 0; i < offset_y; ++i)
+    {
+        printf("\n"); // 在顶部打印适当数量的空行，以实现垂直居中
+    }
+
     for (i = 0; i < M; ++i)
     {
+        printf("%*s", offset_x, ""); // 在每行前打印适当数量的空格，以实现水平居中
+
         for (j = 0; j < N; ++j)
         {
             snake_node find_body, find_obstacle;
@@ -195,18 +254,47 @@ void print_challenge(LLIST *snake_body_find, LLIST *snake_obstacle_find)
         printf("\n");
     }
 
+    printf("%*s", offset_x, ""); // 在得分行前打印适当数量的空格，以实现水平居中
     YELLOW_TEXT();
-    printf("得分 : %d\n" , snake_body_find->count - LENGTH);
+    printf("得分 : %d\n", snake_body_find->count - LENGTH);
+    printf("%*s", offset_x, ""); // 在控制提示行前打印适当数量的空格，以实现水平居中
     printf("向上：W，向下：S，向左：A，向右：D 退出并保存：Q\n");
     RESET_TEXT();
-    return ;
+
+    // 恢复光标位置
+    printf("\0338");
+
+    // 显示光标
+    printf("\033[?25h");
+
+    fflush(stdout);
+    return;
 }
 
 void print_power(LLIST *snake_body_find, LLIST *snake_obstacle_find, LLIST *snake_tag_power_find)
 {
+    // 隐藏光标
+    printf("\033[?25l");
+
+    // 保存光标位置
+    printf("\0337");
+
+    int term_rows, term_cols;
+    get_terminal_size_single(&term_rows, &term_cols);
+
+    int offset_x = (term_cols - N) / 2;
+    int offset_y = (term_rows - M) / 2;
+
     int i, j;
+    for (i = 0; i < offset_y; ++i)
+    {
+        printf("\n"); // 在顶部打印适当数量的空行，以实现垂直居中
+    }
+
     for (i = 0; i < M; ++i)
     {
+        printf("%*s", offset_x, ""); // 在每行前打印适当数量的空格，以实现水平居中
+
         for (j = 0; j < N; ++j)
         {
             snake_node find_body, find_obstacle, find_tag;
@@ -221,27 +309,19 @@ void print_power(LLIST *snake_body_find, LLIST *snake_obstacle_find, LLIST *snak
 
             if (i == 0 || j == 0 || i == M - 1 || j == N - 1)
             {
-                BLUE_TEXT();
-                printf("#");
-                RESET_TEXT();
+                printf("\033[34m#\033[0m"); // 边界
             }
             else if (snake_find_body(snake_body_find, &find_body, cmp_node) != NULL)
             {
-                GREEN_TEXT();
-                printf("⚫");
-                RESET_TEXT();
+                printf("\033[32m⚫\033[0m"); // 蛇身
             }
             else if (snake_find_obstacle(snake_obstacle_find, &find_obstacle, cmp_node) != NULL)
             {
-                MAGENTA_TEXT();
-                printf("☢");
-                RESET_TEXT();
+                printf("\033[35m☢\033[0m"); // 障碍物
             }
             else if (snake_find_tag(snake_tag_power_find, &find_tag, cmp_node) != NULL)
             {
-                RED_TEXT();
-                printf("❤");
-                RESET_TEXT();
+                printf("\033[31m❤\033[0m"); // 能量标签
             }
             else
             {
@@ -251,14 +331,24 @@ void print_power(LLIST *snake_body_find, LLIST *snake_obstacle_find, LLIST *snak
         printf("\n");
     }
 
-    YELLOW_TEXT();
-    printf("得分 : %d\n" , snake_body_find->count - LENGTH);
-    printf("向上：W，向下：S，向左：A，向右：D 退出并保存：Q\n");
-    RESET_TEXT();
-    return ;
+    printf("%*s", offset_x, ""); // 在得分行前打印适当数量的空格，以实现水平居中
+    printf("\033[33m得分 : %d\n", snake_body_find->count - LENGTH);
+
+    printf("%*s", offset_x, ""); // 在控制提示行前打印适当数量的空格，以实现水平居中
+    printf("向上：W，向下：S，向左：A，向右：D 退出并保存：Q\033[0m\n");
+
+    // 恢复光标位置
+    printf("\0338");
+
+    // 显示光标
+    printf("\033[?25h");
+
+    fflush(stdout);
+    return;
 }
 
-LLIST *init_map(LLIST*snake_body_find, LLIST *snake_obstacle_init)
+
+LLIST *init_map(LLIST *snake_body_find, LLIST *snake_obstacle_init)
 {
     obstacle_num = 10;
     int num = 0;
@@ -271,7 +361,7 @@ LLIST *init_map(LLIST*snake_body_find, LLIST *snake_obstacle_init)
     while (num < 10)
     {
         obstacle = get_tag();
-        if (!check_obstacle(snake_obstacle_init, &obstacle) || !check_point(snake_body_find , &obstacle))
+        if (!check_obstacle(snake_obstacle_init, &obstacle) || !check_point(snake_body_find, &obstacle))
         {
             obstacle = get_tag();
         }
@@ -290,10 +380,10 @@ void snake_insert_obstacle(LLIST *snake_obstacle_insert, snake_node *obstacle)
     return;
 }
 
-LLIST *init_tag(LLIST*snake_body_check, LLIST *snake_tag_init, LLIST *snake_obstacle_check)
+LLIST *init_tag(LLIST *snake_body_check, LLIST *snake_tag_init, LLIST *snake_obstacle_check)
 {
     tag_num = 10;
-    int num=0;
+    int num = 0;
 
     snake_tag_init = llist_creat(sizeof(snake_node));
     ERRP(NULL == snake_tag_init, snake_tag_init malloc, goto ERR1);
@@ -303,7 +393,7 @@ LLIST *init_tag(LLIST*snake_body_check, LLIST *snake_tag_init, LLIST *snake_obst
     while (num < 10)
     {
         tag = get_tag();
-        if (!check_obstacle(snake_obstacle_check, &tag) || !check_tag(snake_tag_init, &tag) || !check_point(snake_body_check,&tag)) 
+        if (!check_obstacle(snake_obstacle_check, &tag) || !check_tag(snake_tag_init, &tag) || !check_point(snake_body_check, &tag))
         {
             tag = get_tag();
         }
@@ -315,8 +405,8 @@ ERR1:
     return NULL;
 }
 
-void snake_insert_tag(LLIST *snake_tag_insert , snake_node *tag)
+void snake_insert_tag(LLIST *snake_tag_insert, snake_node *tag)
 {
-    llist_append(snake_tag_insert , tag);
-    return ;
+    llist_append(snake_tag_insert, tag);
+    return;
 }

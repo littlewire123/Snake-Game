@@ -37,6 +37,7 @@ void power_mode_start(LLIST *snake_body_start, LLIST *snake_obstacle_start, LLIS
 
         if (input == 'q' || input == 'Q')
         {
+            printf("\033[?25h");
             power_game_stroe(snake_body_start, snake_obstacle_start, snake_tag_start);
             timeout_power_game(snake_body_start);
             return;
@@ -68,6 +69,7 @@ void power_mode_start(LLIST *snake_body_start, LLIST *snake_obstacle_start, LLIS
     }
     if (STATIC_t.game_over_flag == 0)
     {
+        printf("\033[?25h");
         power_mode_end(snake_body_start);
     }
     return;
@@ -91,6 +93,7 @@ void continue_power_game(LLIST *snake_body_start, LLIST *snake_obstacle_start, L
 
         if (input == 'q' || input == 'Q')
         {
+            printf("\033[?25h");
             power_game_stroe(snake_body_start, snake_obstacle_start, snake_tag_start);
             timeout_power_game(snake_body_start);
             return;
@@ -122,6 +125,7 @@ void continue_power_game(LLIST *snake_body_start, LLIST *snake_obstacle_start, L
     }
     if (STATIC_t.game_over_flag == 0)
     {
+        printf("\033[?25h");
         power_mode_end(snake_body_start);
     }
     return;

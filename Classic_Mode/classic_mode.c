@@ -80,6 +80,7 @@ void start_classic_game(LLIST *snake_body_start)
     }
     if(STATIC_t.game_over_flag == 0)
     {
+        printf("\033[?25h");
         end_classic_game(snake_body_start);
     }
     return;
@@ -104,6 +105,7 @@ void continue_classic_game(LLIST *snake_body_continue)
 
         if (input == 'q' || input == 'Q')
         {
+            printf("\033[?25h");
             classic_game_stroe(snake_body_continue);
             timeout_classic_game(snake_body_continue);
             return;
@@ -137,6 +139,7 @@ void continue_classic_game(LLIST *snake_body_continue)
     }
     if(STATIC_t.game_over_flag == 0)
     {
+        printf("\033[?25h");
         end_classic_game(snake_body_continue);
     }
     return;

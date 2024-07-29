@@ -11,6 +11,7 @@
 #include "../Online_Mode/Online_Power_up/online_power.h"
 
 
+
 /**
  * @brief 销毁已初始化链表
  */
@@ -47,7 +48,12 @@ void Power_Up_mod();
 void About_Game();
 
 void chioce_online_mod();
-void print_online_menu();
+//void print_online_menu();
+
+void print_menu(int highlight);
+void print_online_menu(int highlight);
+void print_submenu(int highlight);
+int getch();
 
 
 #endif

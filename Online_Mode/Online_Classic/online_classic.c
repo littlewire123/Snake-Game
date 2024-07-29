@@ -178,7 +178,7 @@ void print_online_map()
             if (i == 0 || j == 0 || i == M - 1 || j == N - 1)
             {
                 BLUE_TEXT();
-                printf("■");
+                printf("#");
                 RESET_TEXT();
             }
             else if ((user_id = online_find_body(find_body)) != -1)

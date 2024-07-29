@@ -5,6 +5,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <termios.h>
+#include <unistd.h>
+#include <sys/ioctl.h>
 
 #define MAP 0
 #define SNAKE 1
@@ -153,5 +156,7 @@ struct direction_t *parse_direction(const char *data, int data_size);
  * @return int 返回解析后的ID。
  */
 int parse_id(const char *data, int data_size);
+
+void get_terminal_size_online(int *rows, int *cols);
 
 #endif
