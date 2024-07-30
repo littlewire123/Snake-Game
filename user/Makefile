@@ -5,7 +5,7 @@ CC = gcc
 CFLAGS = -Wall -g
 
 # 定义源文件
-SRCS = main.c ./user.c ../llist/llist.c ../map/map.c ../Snake/Snake.c ../Classic_Mode/classic_mode.c ../Challenge_Mode/challenge_mode.c ../Power_up_Mode/power_up_mode.c ../Online_Mode/Online_Classic/online_mode.c ../Online_Mode/Protocol/protocol.c  -lpthread
+SRCS = main.c ./user.c ../llist/llist.c ../map/map.c ../Snake/Snake.c ../Classic_Mode/classic_mode.c ../Challenge_Mode/challenge_mode.c ../Power_up_Mode/power_up_mode.c ../Online_Mode/Online_General/online_mode.c ../Online_Mode/Protocol/protocol.c  -lpthread
 
 # 定义可执行文件名
 TARGET = snake

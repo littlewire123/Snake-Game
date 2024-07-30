@@ -108,55 +108,64 @@ void chioce_room_mod()
     int highlight;
     int c;
 
-    while(1)
+    while (1)
     {
         system("clear");
         highlight = 0;
 
-        while(1)
+        while (1)
         {
             system("clear");
             print_roommenu(highlight);
             c = getch();
 
-            if(c == 27)
+            if (c == 27)
             {
                 getch();
                 c = getch();
 
-                if(c == UP_ARROW)
+                if (c == UP_ARROW)
                 {
-                    if(highlight > 0)
+                    if (highlight > 0)
                     {
                         --highlight;
                     }
                 }
-                else if(c == DOWN_ARROW)
+                else if (c == DOWN_ARROW)
                 {
-                    if(highlight < 2)
+                    if (highlight < 2)
                     {
                         ++highlight;
                     }
                 }
             }
-            else if(c == ENTER_KEY)
+            else if (c == ENTER_KEY)
             {
-                chioce_search_mod = highlight+1;
+                chioce_search_mod = highlight + 1;
                 break;
             }
         }
 
         switch (chioce_search_mod)
         {
-        case 1: 
+        case 1:
             system("clear");
-            return ;
+            if(!init_online_mode())
+            {
+                printf("connect false !\n");
+            }
+            else
+            {
+                start_online_game();
+                printf("\033[?25h");
+            }
+            return;
         case 2:
             system("clear");
             chioce_online_mod();
-            return ;
+            return;
         case 3:
-            return ;
+            return;
         default:
             continue;
         }
@@ -253,7 +262,7 @@ void chioce_online_mod()
     return;
 }
 
-void submenu_select(int *mod)
+void submenu_select(int *mod) // 1.新游戏2.继续游戏3.退出
 {
     int highlight = 0;
     int c;
@@ -266,7 +275,7 @@ void submenu_select(int *mod)
 
         if (c == 27)
         {
-            getch(); // skip the [
+            getch(); //
             c = getch();
 
             if (c == UP_ARROW)
@@ -402,7 +411,7 @@ void About_Game()
 
     printf("按回车键退出...\n");
 
-    while(getchar() != '\n')
+    while (getchar() != '\n')
     {
     }
 

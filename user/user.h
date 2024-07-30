@@ -6,7 +6,7 @@
 #include "../Classic_Mode/classic_mode.h"
 #include "../Challenge_Mode/challenge_mode.h"
 #include "../Power_up_Mode/power_up_mode.h"
-#include "../Online_Mode/Online_Classic/online_mode.h"
+#include "../Online_Mode/Online_General/online_mode.h"
 
 /**
  * @brief 销毁已初始化链表
