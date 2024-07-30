@@ -87,7 +87,7 @@ void chioce_mod()
             break;
         case 4:
             system("clear");
-            chioce_online_mod();
+            chioce_room_mod();
             break;
         case 5:
             About_Game();
@@ -103,9 +103,68 @@ void chioce_mod()
     return;
 }
 
+void chioce_room_mod()
+{
+    int highlight;
+    int c;
+
+    while(1)
+    {
+        system("clear");
+        highlight = 0;
+
+        while(1)
+        {
+            system("clear");
+            print_roommenu(highlight);
+            c = getch();
+
+            if(c == 27)
+            {
+                getch();
+                c = getch();
+
+                if(c == UP_ARROW)
+                {
+                    if(highlight > 0)
+                    {
+                        --highlight;
+                    }
+                }
+                else if(c == DOWN_ARROW)
+                {
+                    if(highlight < 2)
+                    {
+                        ++highlight;
+                    }
+                }
+            }
+            else if(c == ENTER_KEY)
+            {
+                chioce_search_mod = highlight+1;
+                break;
+            }
+        }
+
+        switch (chioce_search_mod)
+        {
+        case 1: 
+            system("clear");
+            return ;
+        case 2:
+            system("clear");
+            chioce_online_mod();
+            return ;
+        case 3:
+            return ;
+        default:
+            continue;
+        }
+    }
+}
+
 void chioce_online_mod()
 {
-    int mod;
     int highlight;
     int c;
 
@@ -142,12 +201,12 @@ void chioce_online_mod()
             }
             else if (c == ENTER_KEY)
             {
-                mod = highlight + 1;
+                chioce_mod_online = highlight + 1;
                 break;
             }
         }
 
-        switch (mod)
+        switch (chioce_mod_online)
         {
         case 1:
             system("clear");
@@ -158,28 +217,31 @@ void chioce_online_mod()
             else
             {
                 start_online_game();
+                printf("\033[?25h");
             }
             return;
         case 2:
             system("clear");
-            if (!init_online_challenge_mode())
+            if (!init_online_mode())
             {
                 printf("connect false !\n");
             }
             else
             {
-                start_online_challenge_game();
+                start_online_game();
+                printf("\033[?25h");
             }
             return;
         case 3:
             system("clear");
-            if (!init_online_power_mode())
+            if (!init_online_mode())
             {
                 printf("connect false !\n");
             }
             else
             {
-                start_online_power_game();
+                start_online_game();
+                printf("\033[?25h");
             }
             return;
         case 4:
@@ -338,14 +400,17 @@ void About_Game()
     printf("本项目遵循MIT开源协议；\n");
     printf("项目地址：https://github.com/littlewire123/Snake-Game\n\n");
 
-    printf("按任意键退出...\n");
-    getchar();
-    getchar();
+    printf("按回车键退出...\n");
+
+    while(getchar() != '\n')
+    {
+    }
+
     system("clear");
     return;
 }
 
-void get_terminal_size(int *rows, int *cols)
+void get_terminal(int *rows, int *cols)
 {
     struct winsize ws;
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws);
@@ -357,7 +422,7 @@ void get_terminal_size(int *rows, int *cols)
 void print_centered_menu(const char **menu, int menu_size, int highlight)
 {
     int rows, cols;
-    get_terminal_size(&rows, &cols);
+    get_terminal(&rows, &cols);
 
     int start_row = (rows - menu_size) / 2;
     int i;
@@ -383,12 +448,12 @@ void print_centered_menu(const char **menu, int menu_size, int highlight)
 void print_menu(int highlight)
 {
     const char *menu[] = {
-        "classic_mode",
-        "challenge_mode",
-        "power_up_mode",
+        "Classic_mode",
+        "Challenge_mode",
+        "Power_up_mode",
         "Online_mode",
         "About_game",
-        "exit game"};
+        "Exit game"};
     int menu_size = sizeof(menu) / sizeof(menu[0]);
     print_centered_menu(menu, menu_size, highlight);
 }
@@ -396,10 +461,10 @@ void print_menu(int highlight)
 void print_online_menu(int highlight)
 {
     const char *menu[] = {
-        "classic_online_mode",
-        "challenge_online_mode",
-        "power_up_online_mode",
-        "exit"};
+        "Classic_online_mode",
+        "Challenge_online_mode",
+        "Power_up_online_mode",
+        "Exit"};
     int menu_size = sizeof(menu) / sizeof(menu[0]);
     print_centered_menu(menu, menu_size, highlight);
 }
@@ -417,8 +482,9 @@ void print_submenu(int highlight)
 void print_roommenu(int highlight)
 {
     const char *menu[] = {
-        "search for room",
-        "create a room"};
+        "Search for room",
+        "Create a room",
+        "Exit"};
     int menu_size = sizeof(menu) / sizeof(menu[0]);
     print_centered_menu(menu, menu_size, highlight);
 }

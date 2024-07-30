@@ -45,6 +45,9 @@ int tag_num; //食物的数量
 int power_mod_count; // 道具模式中，蛇获取效果后走的步数
 int lock_power; // 道具模式中,蛇速度变化的一把锁
 
+int chioce_search_mod; //联网道具模式的选择选项1.搜索房间2.创建房间
+int chioce_mod_online; //联网模式的模式选择
+
 LLIST * snake_obstacle_challenge; //挑战模式障碍物
 LLIST * snake_obstacle_power; //道具模式障碍物
 

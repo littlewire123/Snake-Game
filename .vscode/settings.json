@@ -3,6 +3,8 @@
         "online_mode.h": "c",
         "user.h": "c",
         "map.h": "c",
-        "protocol.h": "c"
+        "protocol.h": "c",
+        "snake.h": "c",
+        "static.h": "c"
     }
 }

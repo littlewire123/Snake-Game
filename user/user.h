@@ -6,11 +6,7 @@
 #include "../Classic_Mode/classic_mode.h"
 #include "../Challenge_Mode/challenge_mode.h"
 #include "../Power_up_Mode/power_up_mode.h"
-#include "../Online_Mode/Online_Classic/online_classic.h"
-#include "../Online_Mode/Online_Challenge/online_challenge.h"
-#include "../Online_Mode/Online_Power_up/online_power.h"
-
-
+#include "../Online_Mode/Online_Classic/online_mode.h"
 
 /**
  * @brief 销毁已初始化链表
@@ -50,9 +46,13 @@ void About_Game();
 void chioce_online_mod();
 //void print_online_menu();
 
+void chioce_room_mod();
+void get_terminal(int *rows, int *cols);
+
 void print_menu(int highlight);
 void print_online_menu(int highlight);
 void print_submenu(int highlight);
+void print_roommenu(int highlight);
 int getch();
 
 

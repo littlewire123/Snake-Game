@@ -53,7 +53,7 @@ struct map_t *parse_map(const char *data, int data_size)
 
     if (data_size != expected_size)
     {
-        printf("data_size : %d expected_size : %d" , data_size , expected_size);
+        printf("data_size : %d expected_size : %d", data_size, expected_size);
         printf("test\n");
         free(map);
         return NULL;
@@ -160,6 +160,32 @@ struct direction_t *parse_direction(const char *data, int data_size)
     memcpy(direction, data, sizeof(struct direction_t));
 
     return direction;
+}
+
+struct room_t *parse_room(const char *data, int data_size)
+{
+    if (data_size != sizeof(struct room_t))
+        return NULL;
+    struct room_t *room = (struct room_t *)malloc(sizeof(struct room_t));
+    if (room == NULL)
+        return NULL;
+
+    memcpy(room, data, sizeof(struct room_t));
+
+    return room;
+}
+
+struct status_t *parse_status(const char *data, int data_size)
+{
+    if (data_size != sizeof(struct status_t))
+        return NULL;
+    struct status_t *status = (struct status_t *)malloc(sizeof(struct status_t));
+    if (status == NULL)
+        return NULL;
+
+    memcpy(status, data, sizeof(struct status_t));
+
+    return status;
 }
 
 int parse_id(const char *data, int data_size)
@@ -270,6 +296,53 @@ char *serialize_direction(const struct direction_t *data, int *data_size)
     return chs;
 }
 
+char *serialize_room(const struct room_t *data, int *data_size)
+{
+    *data_size = sizeof(int) * 2 + 8;
+    int cur_size = *data_size - 8;
+
+    char *chs = (char *)malloc(*data_size);
+    if (chs == NULL)
+    {
+        return NULL;
+    }
+
+    int offset = 0;
+    memcpy(chs + offset, &cur_size, sizeof(int)); // 数据长度
+    offset += sizeof(int);
+    int type = ROOM;
+    memcpy(chs + offset, &type, sizeof(int)); // 数据类型
+    offset += sizeof(int);
+
+    memcpy(chs + offset, &data->id, sizeof(int));
+    offset += sizeof(int);
+    memcpy(chs + offset, &data->model, sizeof(int));
+    offset += sizeof(int);
+    return chs;
+}
+
+char *serialize_status(const struct status_t *data, int *data_size)
+{
+    *data_size = sizeof(int) + 8;
+    int cur_size = *data_size - 8;
+
+    char *chs = (char *)malloc(*data_size);
+    if (chs == NULL)
+        return NULL;
+
+    int offset = 0;
+    memcpy(chs + offset, &cur_size, sizeof(int));
+    offset += sizeof(int);
+    int type = STATUSE;
+    memcpy(chs + offset, &type, sizeof(int));
+    offset += sizeof(int);
+
+    memcpy(chs + offset, &data->code, sizeof(int));
+    offset += sizeof(int);
+
+    return chs;
+}
+
 char *serialize_id(const int *data, int *data_size)
 {
     *data_size = sizeof(int) + 8;
@@ -288,12 +361,4 @@ char *serialize_id(const int *data, int *data_size)
     memcpy(chs + offset, data, sizeof(int));
 
     return chs;
-}
-
-void get_terminal_size_online(int *rows, int *cols)
-{
-    struct winsize ws;
-    ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws);
-    *rows = ws.ws_row;
-    *cols = ws.ws_col;
 }

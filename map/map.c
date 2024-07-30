@@ -104,7 +104,7 @@ int check_tag(LLIST *snake_tag_chech, snake_node *node)
     return 1;
 }
 
-void get_terminal_size_single(int *rows, int *cols)
+void get_terminal_size(int *rows, int *cols)
 {
     struct winsize ws;
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws);
@@ -121,7 +121,7 @@ void print_classic(LLIST *snake_body_find)
     printf("\033[?25l");
 
     int term_rows, term_cols;
-    get_terminal_size_single(&term_rows, &term_cols);
+    get_terminal_size(&term_rows, &term_cols);
 
     int offset_x = (term_cols - N) / 2;
     int offset_y = (term_rows - M) / 2;
@@ -198,7 +198,7 @@ void print_challenge(LLIST *snake_body_find, LLIST *snake_obstacle_find)
     system("clear");
 
     int term_rows, term_cols;
-    get_terminal_size_single(&term_rows, &term_cols);
+    get_terminal_size(&term_rows, &term_cols);
 
     int offset_x = (term_cols - N) / 2;
     int offset_y = (term_rows - M) / 2;
@@ -280,7 +280,7 @@ void print_power(LLIST *snake_body_find, LLIST *snake_obstacle_find, LLIST *snak
     printf("\0337");
 
     int term_rows, term_cols;
-    get_terminal_size_single(&term_rows, &term_cols);
+    get_terminal_size(&term_rows, &term_cols);
 
     int offset_x = (term_cols - N) / 2;
     int offset_y = (term_rows - M) / 2;

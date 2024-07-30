@@ -14,8 +14,8 @@
 #define FOOD 2
 #define DIRECTION 3
 #define ID 4
-
-
+#define ROOM 5
+#define STATUSE 6
 
 // 地图
 struct map_t
@@ -41,8 +41,6 @@ struct food_t
     struct position_t *foods;
 };
 
-
-
 // 移动方向信息（玩家控制）
 struct direction_t
 {
@@ -56,6 +54,18 @@ struct position_t
 {
     int x;
     int y;
+};
+
+//房间信息
+struct room_t
+{
+    int id; //房间id
+    int model; //游戏模式
+};
+
+struct status_t
+{
+    int code; //状态信息，1：成功，0：失败
 };
 
 /**
@@ -112,6 +122,8 @@ char *serialize_direction(const struct direction_t *data, int *data_size);
  */
 char *serialize_id(const int *data, int *data_size);
 
+char *serialize_room(const struct room_t *data, int *data_size);
+
 /**
  * @brief 解析字节流为地图数据结构体。
  *
@@ -157,6 +169,9 @@ struct direction_t *parse_direction(const char *data, int data_size);
  */
 int parse_id(const char *data, int data_size);
 
-void get_terminal_size_online(int *rows, int *cols);
+struct room_t *parse_room(const char *data, int data_size);
+struct status_t *parse_status(const char * data , int data_size);
+char *serialize_status(const struct status_t *data, int *data_size);
+char *serialize_room(const struct room_t *data, int *data_size);
 
 #endif
