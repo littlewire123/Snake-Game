@@ -5,7 +5,6 @@
 #include <map>
 #include <mutex>
 #include <set>
-#include <time.h>
 #include "../protocol/protocol.hpp"
 
 using namespace std;
@@ -14,10 +13,12 @@ struct user_status
 {
     int move_x;
     int move_y;
+    int fd;
 
     snake_data_t snake;
 };
 
+// 后续可能考虑在读取用户状态和用户连接列表时加锁
 class game_logic
 {
 public:
@@ -25,19 +26,20 @@ public:
     {
         default_snake_length = 3; // 蛇的默认长度
         default_width = 60;       // 地图默认宽度
-        default_height = 30;      // 地图默认高度
+        default_height = 26;      // 地图默认高度
         default_max_num = 500;    // 最大大小
         game_mode = mode;
         max_food = 10;
         max_user = 8;
         cur_step = 0;
-        srand(time(NULL));
-        /*
-        game_speed = 500000;
-        default_game_offset = 5000;
-        min_speed = 200000;
-        */
+        _map.num = 0;
+        _foods.num = 0;
+        _foods.foods = nullptr; // 指针一定要给null，不然如果没初始化直接调用析构函数会出错
+        _map.obstacle_pos = nullptr;
     }
+
+    // 复制构造函数
+    game_logic(const game_logic &other);
 
     ~game_logic()
     {
@@ -48,37 +50,43 @@ public:
     map<int32_t, user_status> get_user_status();
     food_t get_foods();
     map_t get_map();
+    int32_t get_model() { return game_mode; }
     void set_mode(int32_t mode) { game_mode = mode; }
     int32_t get_speed() { return game_speed; }
+    map<int32_t, int> get_connecions() { return _connections; }
     bool init_game();
     bool end_game(); // 待设计和完善，暂时用不上
     bool change_direct(int32_t id, direction_t dir);
     bool move();
 
-    bool add_user(int32_t id);
+    bool add_user(int32_t id, int fd);
+    bool close_user_connect(int32_t id);
 
-    static const int32_t CLASSIC = 0;
-    static const int32_t CHALLENGE = 1;
-    static const int32_t POWER_UP = 2;
-    static const int32_t MOVE_STEP = 3;         // 默认更新移动次数，即检验次数到达后才移动没有特殊效果的蛇
-    static const int32_t SPEED_UP_STEP = 40;    // 加速生效步数
-    static const int32_t SPEED_DOWN_STEP = 80;  // 减速生效步数
-    static const int32_t SHORTER_NUM = 3;       // 变短数量
-    static const int32_t LONGER_NUM = 3;        // 变长数量
+    static const int32_t CLASSIC = 1;
+    static const int32_t CHALLENGE = 2;
+    static const int32_t POWER_UP = 3;
+    static const int32_t MOVE_STEP = 3;        // 默认更新移动次数，即检验次数到达后才移动没有特殊效果的蛇
+    static const int32_t SPEED_UP_STEP = 40;   // 加速生效步数
+    static const int32_t SPEED_DOWN_STEP = 80; // 减速生效步数
+    static const int32_t SHORTER_NUM = 3;      // 变短数量
+    static const int32_t LONGER_NUM = 3;       // 变长数量
 
     // test
     void print();
 
 private:
-    map<int32_t, user_status> _status;      // 存储用户状态，主键用户id，值为用户状态结构体
-    vector<int32_t> _dead_user;             // 死亡的用户名单
-    map<int32_t, int32_t> speed_up_users;   // 吃到增益的用户，主键用户id，值为生效次数（调用move函数的次数）
-    map<int32_t, int32_t> speed_down_users; // 吃到减益的用户，主键用户id，值为生效次数（调用move函数的次数）
+    map<int32_t, user_status> _status;       // 存储用户状态，主键用户id，值为用户状态结构体
+    vector<int32_t> _dead_user;              // 死亡的用户名单
+    map<int32_t, int32_t> _speed_up_users;   // 吃到增益的用户，主键用户id，值为生效次数（调用move函数的次数）
+    map<int32_t, int32_t> _speed_down_users; // 吃到减益的用户，主键用户id，值为生效次数（调用move函数的次数）
+    map<int32_t, int> _connections;          // 连接进这个房间的用户，主键id， 值为套接字
 
     food_t _foods;
     map_t _map;
 
+    // 锁
     mutex _direction_mtx;
+    mutex _connection_mtx;
 
     int32_t default_snake_length; // 蛇的默认长度
     int32_t default_width;        // 地图默认宽度
@@ -109,7 +117,7 @@ private:
     position_t *_find_obstacle(const position_t &pos);
 
     // 用户处理函数
-    user_status _init_user_data(int32_t id);
+    user_status _init_user_data(int32_t id, int fd);
 
     // 食物处理函数
     position_t *_find_food(const position_t &pos);
@@ -125,6 +133,62 @@ private:
     bool _init_challenge_game();
     bool _init_power_up_game();
 };
+
+game_logic::game_logic(const game_logic &other)
+{
+    // 复制基本类型
+    default_snake_length = other.default_snake_length;
+    default_width = other.default_width;
+    default_height = other.default_height;
+    default_max_num = other.default_max_num;
+    game_mode = other.game_mode;
+    max_food = other.max_food;
+    max_user = other.max_user;
+    game_speed = other.game_speed;
+    default_game_offset = other.default_game_offset;
+    min_speed = other.min_speed;
+    max_obstacle = other.max_obstacle;
+    cur_step = other.cur_step;
+
+    // 复制用户状态
+    _status = other._status; // 假设 user_status 中的内容可以被安全拷贝
+
+    // 深拷贝 user_status 中的 snake_data_t
+    for (auto &pair : _status)
+    {
+        auto &status = pair.second;
+        status.snake.num = status.snake.num;
+        status.snake.snake_pos = new position_t[status.snake.num];
+        std::copy(other._status.at(pair.first).snake.snake_pos,
+                  other._status.at(pair.first).snake.snake_pos + status.snake.num,
+                  status.snake.snake_pos);
+    }
+
+    // 复制死亡用户列表
+    _dead_user = other._dead_user;
+
+    // 复制速度增益/减益用户
+    _speed_up_users = other._speed_up_users;
+    _speed_down_users = other._speed_down_users;
+
+    // 深拷贝食物
+    _foods.num = other._foods.num;
+    if (_foods.num > 0)
+    {
+        _foods.foods = new position_t[_foods.num];
+        std::copy(other._foods.foods, other._foods.foods + _foods.num, _foods.foods);
+    }
+
+    // 深拷贝地图
+    _map.num = other._map.num;
+    _map.width = other._map.width;
+    _map.height = other._map.height;
+    if (_map.num > 0)
+    {
+        _map.obstacle_pos = new position_t[_map.num];
+        std::copy(other._map.obstacle_pos, other._map.obstacle_pos + _map.num, _map.obstacle_pos);
+    }
+}
 
 map<int32_t, user_status> game_logic::get_user_status()
 {
@@ -341,9 +405,10 @@ position_t *game_logic::_find_obstacle(const position_t &pos)
     return nullptr;
 }
 
-user_status game_logic::_init_user_data(int32_t id)
+user_status game_logic::_init_user_data(int32_t id, int fd)
 {
     user_status status;
+    status.fd = fd;
     status.snake.id = id;
     status.snake.num = 3;
     status.snake.snake_pos = new position_t[default_max_num];
@@ -415,23 +480,45 @@ user_status game_logic::_init_user_data(int32_t id)
     return status;
 }
 
-bool game_logic::add_user(int32_t id)
+bool game_logic::add_user(int32_t id, int fd)
 {
     if (_status.size() >= max_user)
     {
         return false;
     }
-    user_status user = _init_user_data(id);
+    user_status user = _init_user_data(id, fd);
 
-    if (!_status.insert({id, user}).second)
+    // 加锁
     {
-        return false;
+        lock_guard<mutex> lock(_connection_mtx);
+        if (!_status.insert({id, user}).second)
+        {
+            return false;
+        }
+
+        // 添加进连接列表
+        if (!_connections.insert({id, fd}).second)
+        {
+            _status.erase(id);
+            return false;
+        }
     }
 
     // 生成更多食物
     _add_food(_make_food());
 
     return true;
+}
+
+bool game_logic::close_user_connect(int32_t id)
+{
+    int ret;
+    {
+        lock_guard<mutex> lock(_connection_mtx);
+        ret = _connections.erase(id);
+    }
+
+    return ret > 0;
 }
 
 bool game_logic::_add_snake_body(int32_t id, const position_t &pos)
@@ -477,8 +564,7 @@ bool game_logic::_move_snake(user_status &user)
     {
         return true;
     }
-    else if ((speed_down_users.find(user.snake.id) != speed_down_users.end() && cur_step != 0) 
-            || (cur_step % MOVE_STEP != 0 && speed_up_users.find(user.snake.id) == speed_up_users.end()))
+    else if ((_speed_down_users.find(user.snake.id) != _speed_down_users.end() && cur_step != 0) || (cur_step % MOVE_STEP != 0 && _speed_up_users.find(user.snake.id) == _speed_up_users.end()))
     {
         return true;
     }
@@ -546,12 +632,12 @@ bool game_logic::get_random_effect(user_status &user)
     else if (rand_num < 60)
     {
         // 加速
-        speed_up_users[user.snake.id] = SPEED_UP_STEP;
+        _speed_up_users[user.snake.id] = SPEED_UP_STEP;
     }
     else if (rand_num < 70)
     {
         // 减速
-        speed_down_users[user.snake.id] = SPEED_DOWN_STEP;
+        _speed_down_users[user.snake.id] = SPEED_DOWN_STEP;
     }
     else if (rand_num < 80)
     {
@@ -600,12 +686,12 @@ bool game_logic::get_random_effect(user_status &user)
 void game_logic::update_buff_count()
 {
     // 更新加速buff
-    for (auto iter = speed_up_users.begin(); iter != speed_up_users.end();)
+    for (auto iter = _speed_up_users.begin(); iter != _speed_up_users.end();)
     {
         --iter->second;
         if (iter->second <= 0)
         {
-            iter = speed_up_users.erase(iter);
+            iter = _speed_up_users.erase(iter);
         }
         else
         {
@@ -614,12 +700,12 @@ void game_logic::update_buff_count()
     }
 
     // 更新减速debuff
-    for (auto iter = speed_down_users.begin(); iter != speed_down_users.end();)
+    for (auto iter = _speed_down_users.begin(); iter != _speed_down_users.end();)
     {
         --iter->second;
         if (iter->second <= 0)
         {
-            iter = speed_down_users.erase(iter);
+            iter = _speed_down_users.erase(iter);
         }
         else
         {
