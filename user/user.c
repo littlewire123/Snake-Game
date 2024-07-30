@@ -150,15 +150,7 @@ void chioce_room_mod()
         {
         case 1:
             system("clear");
-            if(!init_online_mode())
-            {
-                printf("connect false !\n");
-            }
-            else
-            {
-                start_online_game();
-                printf("\033[?25h");
-            }
+            init_online_search();
             return;
         case 2:
             system("clear");

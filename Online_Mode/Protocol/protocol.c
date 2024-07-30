@@ -323,7 +323,7 @@ char *serialize_room(const struct room_t *data, int *data_size)
 
 char *serialize_status(const struct status_t *data, int *data_size)
 {
-    *data_size = sizeof(int) + 8;
+    *data_size = sizeof(struct status_t) + 8;
     int cur_size = *data_size - 8;
 
     char *chs = (char *)malloc(*data_size);
@@ -337,8 +337,8 @@ char *serialize_status(const struct status_t *data, int *data_size)
     memcpy(chs + offset, &type, sizeof(int));
     offset += sizeof(int);
 
-    memcpy(chs + offset, &data->code, sizeof(int));
-    offset += sizeof(int);
+    memcpy(chs + offset, data, sizeof(int));
+    offset += sizeof(sizeof(struct status_t));
 
     return chs;
 }
@@ -359,6 +359,7 @@ char *serialize_id(const int *data, int *data_size)
     memcpy(chs + offset, &type, sizeof(int)); // 数据类型
     offset += sizeof(int);
     memcpy(chs + offset, data, sizeof(int));
+    offset += sizeof(int);
 
     return chs;
 }
