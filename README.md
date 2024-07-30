@@ -1,4 +1,4 @@
-# 贪吃蛇游戏总体架构
+贪吃蛇游戏总体架构
 
 ## 一、游戏架构概述
 
@@ -81,7 +81,7 @@
 ##### （2）数据包格式：
 
 - 有效数据长度（开头四字节）
-- 数据类型（往后四字节，0：地图数据`struct map_t`，1：玩家蛇的位置数据`struct snake_data`，2：食物位置信息`struct food_t`，3：玩家控制信息`struct direction_t`，4：用户id信息`int32_t`）
+- 数据类型（往后四字节，0：地图数据`struct map_t`，1：玩家蛇的位置数据`struct snake_data`，2：食物位置信息`struct food_t`，3：玩家控制信息`struct direction_t`，4：用户id信息`int32_t`，5：房间信息`room_t`，6：状态信息`status_t`，表示处理成功或者失败）
 - 数据正文，长度为开头的四字节
 - 包尾（包分隔符）：`\0`
 
@@ -91,24 +91,24 @@
 //地图
 struct map_t
 {
-	size_t num;
-	size_t width;
-	size_t height;
-	struct position_t *obstacle_pos;
+    int num;
+    int width;
+    int height;
+    struct position_t *obstacle_pos;
 };
 
 //蛇信息
 struct snake_data_t
 {
-	size_t id;
-    size_t num;
+    int id;
+    int num;
     struct position_t *snake_pos;
 };
 
 //食物位置
 struct food_t
 {
-    size_t num;
+    int num;
     struct position_t *foods;
 };
 
@@ -123,14 +123,33 @@ struct direction_t
 //位置坐标
 struct position_t
 {
-    size_t x;
-    size_t y;
+    int x;
+    int y;
 };
+
+//房间信息
+struct room_t
+{
+    int id;     //0表示客户端创建房间，id无效，正数表示搜索房间，id有效model无效
+    int model;  //游戏模式0：经典模式，1：挑战模式，2：道具模式
+}
+
+//状态码
+struct status_t
+{
+    int code;  
+    /*
+    0：处理失败，
+    1：处理成功，
+    2：客户端请求已有房间列表
+}
 ```
 
 
 
 ### 4. 服务器和客户端的任务
+
+
 
 ##### （1）服务器：
 
@@ -157,10 +176,10 @@ struct position_t
 ```
 struct user_status
 {
-	int move_x;
-	int move_y;
-	
-	snake_data_t snake;
+    int move_x;
+    int move_y;
+    
+    snake_data_t snake;
 };
 ```
 
@@ -203,4 +222,4 @@ struct user_status
 
 ### 2. 合规审查
 
-- 确保游戏内容和操作符合法律法规
+- 确保游戏内容和操作符合法律法规                                                                                                                  
