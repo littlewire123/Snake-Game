@@ -18,6 +18,7 @@
 
 #include "../protocol/protocol.hpp"
 #include "../game_logic/game_logic.hpp"
+#include "../user_auth/user_auth.hpp"
 
 using namespace std;
 
@@ -27,7 +28,7 @@ struct connect_user_info_t
     int32_t room_id;
 };
 
-class TcpServer
+class tcp_server
 {
 public:
     // 状态码
@@ -41,8 +42,8 @@ public:
     const static int32_t REGISTER_REQUEST = 3;
     const static int32_t LOGIN_REQUEST = 4;
 
-    TcpServer(const std::string &ip, int port);
-    ~TcpServer();
+    tcp_server(const std::string &ip, int port);
+    ~tcp_server();
 
     bool bindAndListen();
     void run();
@@ -65,8 +66,10 @@ private:
 
     // 事件处理函数
     void create_or_search_room(int fd, char *buffer, int32_t buffer_size);
-    void change_user_dir(int32_t id, char *buffer, int32_t buffer_size);
+    void change_user_dir(int fd, char *buffer, int32_t buffer_size);
     void send_rooms_info(int fd, char *buffer, int32_t buffer_size);
+    void regiser(int fd, char *buffer, int32_t buffer_size);
+    void login(int fd, char *buffer, int32_t buffer_size);
 
 private:
     int server_fd;
@@ -78,6 +81,7 @@ private:
     bool stop; // 保留控制位，控制服务器启停
 
     Protocol protocol;
+    user_auth auth;
 
     // 单独设置缓冲区可以防止竞态
     char send_buff[51200];
@@ -90,7 +94,7 @@ private:
     map<int32_t, game_logic> rooms;            // 存放房间，主键房间id，值为游戏逻辑类
 };
 
-TcpServer::TcpServer(const std::string &ip, int port)
+tcp_server::tcp_server(const std::string &ip, int port)
 {
     server_fd = createSocket();
     if (server_fd == -1)
@@ -105,7 +109,7 @@ TcpServer::TcpServer(const std::string &ip, int port)
     server_addr.sin_port = htons(port);
 }
 
-TcpServer::~TcpServer()
+tcp_server::~tcp_server()
 {
     if (server_fd != -1)
     {
@@ -117,7 +121,7 @@ TcpServer::~TcpServer()
     }
 }
 
-int TcpServer::createSocket()
+int tcp_server::createSocket()
 {
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock == -1)
@@ -128,7 +132,7 @@ int TcpServer::createSocket()
     return sock;
 }
 
-void TcpServer::setNonBlocking(int sock)
+void tcp_server::setNonBlocking(int sock)
 {
     int flags = fcntl(sock, F_GETFL, 0);
     if (flags == -1)
@@ -144,7 +148,7 @@ void TcpServer::setNonBlocking(int sock)
     }
 }
 
-bool TcpServer::bindAndListen()
+bool tcp_server::bindAndListen()
 {
     if (bind(server_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1)
     {
@@ -170,7 +174,7 @@ bool TcpServer::bindAndListen()
     return true;
 }
 
-bool TcpServer::check_user_id(int32_t id)
+bool tcp_server::check_user_id(int32_t id)
 {
     for (auto i : connections)
     {
@@ -183,7 +187,7 @@ bool TcpServer::check_user_id(int32_t id)
     return true;
 }
 
-int32_t TcpServer::make_user_id()
+int32_t tcp_server::make_user_id()
 {
     int32_t id = rand() % 100;
 
@@ -195,12 +199,12 @@ int32_t TcpServer::make_user_id()
     return id;
 }
 
-bool TcpServer::check_room_id(int32_t id)
+bool tcp_server::check_room_id(int32_t id)
 {
     return rooms.find(id) == rooms.end();
 }
 
-int32_t TcpServer::make_room_id()
+int32_t tcp_server::make_room_id()
 {
     int32_t id = rand() % 100;
 
@@ -212,7 +216,7 @@ int32_t TcpServer::make_room_id()
     return id;
 }
 
-void TcpServer::acceptConnections()
+void tcp_server::acceptConnections()
 {
     while (true)
     {
@@ -245,7 +249,7 @@ void TcpServer::acceptConnections()
     }
 }
 
-void TcpServer::game_logic_handle(int32_t room_id)
+void tcp_server::game_logic_handle(int32_t room_id)
 {
     while (true)
     {
@@ -277,7 +281,7 @@ void TcpServer::game_logic_handle(int32_t room_id)
     }
 }
 
-void TcpServer::send_snakes_and_foods_data(int client, game_logic &game)
+void tcp_server::send_snakes_and_foods_data(int client, game_logic &game)
 {
     map<int32_t, user_status> users = game.get_user_status();
     food_t foods = game.get_foods();
@@ -350,7 +354,7 @@ void TcpServer::send_snakes_and_foods_data(int client, game_logic &game)
     send(client, send_buff, offset, 0);
 }
 
-bool TcpServer::send_status_code(int fd, int32_t code)
+bool tcp_server::send_status_code(int fd, int32_t code)
 {
     int32_t pack_num = 1;
     int data_size;
@@ -379,7 +383,7 @@ bool TcpServer::send_status_code(int fd, int32_t code)
     return send(fd, buf, offset, 0) > 0;
 }
 
-void TcpServer::send_rooms_info(int fd, char *buffer, int32_t buffer_size)
+void tcp_server::send_rooms_info(int fd, char *buffer, int32_t buffer_size)
 {
     // 动态申请房间空间，一个房间数据包的长度为 数据本体加2个int加一个包分隔符,还有数据报头的8个字节
     char *buf = new char[sizeof(int32_t) * 2 + (sizeof(room_t) + 2 * sizeof(int32_t) + 1) * (rooms.size() + 1)];
@@ -422,7 +426,109 @@ void TcpServer::send_rooms_info(int fd, char *buffer, int32_t buffer_size)
     }
 }
 
-void TcpServer::server_status()
+void tcp_server::regiser(int fd, char *buffer, int32_t buffer_size)
+{
+    // 读数据
+    int32_t offset = 0;
+    int32_t pack_num;
+    int32_t data_size;
+
+    offset = protocol.get_head_info(buffer, buffer_size, &data_size, &pack_num);
+    if (offset == -1)
+    {
+        perror("room info read failed");
+        return;
+    }
+
+    // 读包
+    int pack_length;
+    int type;
+    char ch;
+    void *data = protocol.parse(buffer + offset, buffer_size - offset, &type, &pack_length);
+
+    if (data == nullptr)
+    {
+        perror("user info parse failed");
+        return;
+    }
+
+    if (type != USER_INFO)
+    {
+        perror("not expect data type");
+        free(data);
+        data = nullptr;
+        return;
+    }
+
+    user_info_t user_info = *((user_info_t *)data);
+    free(data);
+    data = nullptr;
+
+    cout<<"user_name : " << user_info.user_name<<endl<<"user_pwd : "<<user_info.user_pwd<<endl;
+
+    //事件处理
+    if (auth.Register(user_info))
+    {
+        send_status_code(fd, STATUS_SUCCESS_CODE);
+        cout<<"register success\n";
+    }
+    else
+    {
+        send_status_code(fd, STATUS_ERROR_CODE);
+    }
+}
+void tcp_server::login(int fd, char *buffer, int32_t buffer_size)
+{
+    // 读数据
+    int32_t offset = 0;
+    int32_t pack_num;
+    int32_t data_size;
+
+    offset = protocol.get_head_info(buffer, buffer_size, &data_size, &pack_num);
+    if (offset == -1)
+    {
+        perror("room info read failed");
+        return;
+    }
+
+    // 读包
+    int pack_length;
+    int type;
+    char ch;
+    void *data = protocol.parse(buffer + offset, buffer_size - offset, &type, &pack_length);
+
+    if (data == nullptr)
+    {
+        perror("user info parse failed");
+        return;
+    }
+
+    if (type != USER_INFO)
+    {
+        perror("not expect data type");
+        free(data);
+        data = nullptr;
+        return;
+    }
+
+    user_info_t user_info = *((user_info_t *)data);
+    free(data);
+    data = nullptr;
+
+    cout<<"user_name : " << user_info.user_name<<endl<<"user_pwd : "<<user_info.user_pwd<<endl;
+
+    //事件处理
+    if (auth.Login(user_info))
+    {
+        send_status_code(fd, STATUS_SUCCESS_CODE);
+    }
+    else
+    {
+        send_status_code(fd, STATUS_ERROR_CODE);
+    }
+}
+
+void tcp_server::server_status()
 {
     int i;
     while (true)
@@ -453,7 +559,7 @@ void TcpServer::server_status()
     }
 }
 
-void TcpServer::create_or_search_room(int fd, char *buffer, int32_t buffer_size)
+void tcp_server::create_or_search_room(int fd, char *buffer, int32_t buffer_size)
 {
     int32_t offset = 0;
     int32_t pack_num;
@@ -514,7 +620,7 @@ void TcpServer::create_or_search_room(int fd, char *buffer, int32_t buffer_size)
 
         try
         {
-            thread game_thread(&TcpServer::game_logic_handle, this, room_id);
+            thread game_thread(&tcp_server::game_logic_handle, this, room_id);
             game_thread.detach(); // 确保线程在后台运行
         }
         catch (const std::exception &e)
@@ -611,7 +717,7 @@ void TcpServer::create_or_search_room(int fd, char *buffer, int32_t buffer_size)
     cout << "send success " << offset << endl;
 }
 
-void TcpServer::change_user_dir(int32_t id, char *buffer, int32_t buffer_size)
+void tcp_server::change_user_dir(int fd, char *buffer, int32_t buffer_size)
 {
     // 读数据
     int32_t offset = 0;
@@ -643,7 +749,7 @@ void TcpServer::change_user_dir(int32_t id, char *buffer, int32_t buffer_size)
     free(data);
     data = nullptr;
 
-    auto iter = connections.find(id);
+    auto iter = connections.find(fd);
 
     if (iter != connections.end())
     {
@@ -655,17 +761,17 @@ void TcpServer::change_user_dir(int32_t id, char *buffer, int32_t buffer_size)
     }
 }
 
-void TcpServer::run()
+void tcp_server::run()
 {
-    thread server_status_thread(&TcpServer::server_status, this);
-    server_status_thread.detach();
+    //thread server_status_thread(&tcp_server::server_status, this);
+    //server_status_thread.detach();
 
     // 开始监听连接和接收用户输入
     acceptConnections();
 }
 
 // 处理用户发送来的控制信号
-void TcpServer::handleClientData(int client_fd)
+void tcp_server::handleClientData(int client_fd)
 {
     while (true)
     {
@@ -754,6 +860,7 @@ void TcpServer::handleClientData(int client_fd)
             // 读请求码
             memcpy(&request_code, recv_buff + offset, sizeof(int32_t));
             offset += sizeof(int32_t);
+            printf("request code : %d\n", request_code);
 
             switch (request_code)
             {
@@ -767,6 +874,12 @@ void TcpServer::handleClientData(int client_fd)
 
             case GET_ROOMS_REQUEST:
                 send_rooms_info(client_fd, recv_buff + offset, count - offset);
+
+            case REGISTER_REQUEST:
+                regiser(client_fd, recv_buff + offset, count - offset);
+
+            case LOGIN_REQUEST:
+                login(client_fd, recv_buff + offset, count - offset);
 
             default:
                 break;
@@ -822,7 +935,7 @@ void TcpServer::handleClientData(int client_fd)
     }
 }
 
-void TcpServer::removeEpollEvent(int epoll_fd, int fd)
+void tcp_server::removeEpollEvent(int epoll_fd, int fd)
 {
     if (epoll_ctl(epoll_fd, EPOLL_CTL_DEL, fd, nullptr) == -1)
     {
@@ -830,7 +943,7 @@ void TcpServer::removeEpollEvent(int epoll_fd, int fd)
     }
 }
 
-void TcpServer::addEpollEvent(int epoll_fd, int fd, uint32_t events)
+void tcp_server::addEpollEvent(int epoll_fd, int fd, uint32_t events)
 {
     struct epoll_event event;
     event.data.fd = fd;

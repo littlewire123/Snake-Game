@@ -1,7 +1,7 @@
 /*#include "./tcp_server/tcp_server.hpp"
 
 int main() {
-    TcpServer server("0.0.0.0", 8080);
+    tcp_server server("0.0.0.0", 8080);
     if (!server.bindAndListen()) {
         return 1;
     }
