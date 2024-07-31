@@ -30,9 +30,17 @@ struct connect_user_info_t
 class TcpServer
 {
 public:
-    const static int32_t SUCCESS_CODE = 1;
-    const static int32_t ERROR_CODE = 0;
-    const static int32_t GET_ROOMS_CODE = 2;
+    // 状态码
+    const static int32_t STATUS_SUCCESS_CODE = 1;
+    const static int32_t STATUS_ERROR_CODE = 0;
+
+    // 请求码
+    const static int32_t CHANGE_DIRECT_REQUEST = 0;
+    const static int32_t CREAT_OR_SEARCH_ROOMS_REQUEST = 1;
+    const static int32_t GET_ROOMS_REQUEST = 2;
+    const static int32_t REGISTER_REQUEST = 3;
+    const static int32_t LOGIN_REQUEST = 4;
+
     TcpServer(const std::string &ip, int port);
     ~TcpServer();
 
@@ -52,11 +60,13 @@ private:
     int32_t make_room_id();
     bool check_room_id(int32_t id);
     void send_snakes_and_foods_data(int client, game_logic &game);
-    void create_or_search_room(int fd, room_t room);
-    void change_user_dir(int32_t id, direction_t dir);
     bool send_status_code(int fd, int32_t code);
-    void status_handle(int fd, status_t status);
-    void send_rooms_info(int fd);
+    void server_status();
+
+    // 事件处理函数
+    void create_or_search_room(int fd, char *buffer, int32_t buffer_size);
+    void change_user_dir(int32_t id, char *buffer, int32_t buffer_size);
+    void send_rooms_info(int fd, char *buffer, int32_t buffer_size);
 
 private:
     int server_fd;
@@ -237,20 +247,23 @@ void TcpServer::acceptConnections()
 
 void TcpServer::game_logic_handle(int32_t room_id)
 {
-    auto iter = rooms.find(room_id);
-    if (iter == rooms.end())
-    {
-        return;
-    }
-
     while (true)
     {
+        auto iter = rooms.begin();
         map<int32_t, int> users;
-        // classic_game.move();
+        {
+            lock_guard<mutex> lock(rooms_mtx);
+            iter = rooms.find(room_id);
+            if (iter == rooms.end())
+            {
+                return;
+            }
+            // classic_game.move();
 
-        iter->second.move();
+            iter->second.move();
 
-        users = iter->second.get_connecions();
+            users = iter->second.get_connecions();
+        }
 
         // 发送用户的蛇位置数据
         for (auto user : users)
@@ -366,7 +379,7 @@ bool TcpServer::send_status_code(int fd, int32_t code)
     return send(fd, buf, offset, 0) > 0;
 }
 
-void TcpServer::send_rooms_info(int fd)
+void TcpServer::send_rooms_info(int fd, char *buffer, int32_t buffer_size)
 {
     // 动态申请房间空间，一个房间数据包的长度为 数据本体加2个int加一个包分隔符,还有数据报头的8个字节
     char *buf = new char[sizeof(int32_t) * 2 + (sizeof(room_t) + 2 * sizeof(int32_t) + 1) * (rooms.size() + 1)];
@@ -384,7 +397,7 @@ void TcpServer::send_rooms_info(int fd)
     memcpy(buf + offset, &pack_num, sizeof(int32_t));
     offset += sizeof(int32_t);
 
-    for (auto room : rooms)
+    for (auto &room : rooms)
     {
         room_t r;
         r.id = room.first;
@@ -409,26 +422,67 @@ void TcpServer::send_rooms_info(int fd)
     }
 }
 
-void TcpServer::status_handle(int fd, status_t status)
+void TcpServer::server_status()
 {
-    switch (status.code)
+    int i;
+    while (true)
     {
-    case GET_ROOMS_CODE:
-        send_rooms_info(fd);
-        break;
+        printf("========================================\n");
+        
+        printf("%-*s | %-*d\n", 20, "room num", 20, rooms.size());
+        printf("%-*s | %-*d\n", 20, "connection num", 20, connections.size());
 
-    default:
-        send_status_code(fd, ERROR_CODE);
-        break;
+        i = 0;
+
+        // 有待改进，改为const
+        for (auto &room : rooms)
+        {
+            string str = "room " + to_string(room.first);
+            printf("%-*s | %-*d\n", 20, str.c_str(), 20, room.second.get_user_num());
+            ++i;
+        }
+
+        if (i == 0)
+        {
+            printf("%-*s | %-*s\n", 20, "NULL", 20, "NULL");
+        }
+
+        printf("========================================\n");
+
+        sleep(3);
     }
 }
 
-void TcpServer::create_or_search_room(int fd, room_t room)
+void TcpServer::create_or_search_room(int fd, char *buffer, int32_t buffer_size)
 {
+    int32_t offset = 0;
+    int32_t pack_num;
+    int32_t data_size;
 
-    cout << "room_id : " << room.id << endl;
-    cout << "room_model : " << room.model << endl;
-    room_t ret_room_info;
+    offset = protocol.get_head_info(buffer, buffer_size, &data_size, &pack_num);
+    if (offset == -1)
+    {
+        perror("room info read failed");
+        return;
+    }
+
+    // 读包
+    int pack_length;
+    int type;
+    char ch;
+    void *data = (room_t *)protocol.parse(buffer + offset, buffer_size - offset, &type, &pack_length);
+
+    if (type != ROOM)
+    {
+        perror("not expect data type");
+        free(data);
+        data = nullptr;
+        return;
+    }
+
+    room_t room = *((room_t *)data);
+    free(data);
+    data = nullptr;
 
     int32_t user_id;
     int32_t room_id;
@@ -448,15 +502,13 @@ void TcpServer::create_or_search_room(int fd, room_t room)
         if (!logic_ptr->init_game())
         {
             // 传送失败的处理，待完善
-            if (!send_status_code(fd, ERROR_CODE))
+            if (!send_status_code(fd, STATUS_ERROR_CODE))
             {
                 perror("init game error code send error");
             }
             perror("init game error");
             return;
         }
-
-        cout << "init after\n";
 
         room.id = room_id;
 
@@ -478,7 +530,7 @@ void TcpServer::create_or_search_room(int fd, room_t room)
         // 未找到，返回错误码，关闭连接
         if (iter == rooms.end())
         {
-            if (!send_status_code(fd, ERROR_CODE))
+            if (!send_status_code(fd, STATUS_ERROR_CODE))
             {
                 perror("room not found code send error");
             }
@@ -498,7 +550,7 @@ void TcpServer::create_or_search_room(int fd, room_t room)
         {
             // 错误处理，回发客户端错误码，待完善
             // 传送失败的处理，待完善
-            if (!send_status_code(fd, ERROR_CODE))
+            if (!send_status_code(fd, STATUS_ERROR_CODE))
             {
                 perror("add user error code send error");
             }
@@ -515,10 +567,10 @@ void TcpServer::create_or_search_room(int fd, room_t room)
     cout << "add a user" << endl;
 
     // 回发用户的id,房间id,和游戏地图
-    int32_t pack_num = 3;
-    int data_size;
-    char ch = '\0';                   // 包之间的分隔符
-    int32_t offset = sizeof(int32_t); // 预留总数据长的的位置；
+    pack_num = 3;
+    data_size;
+    ch = '\0';                // 包之间的分隔符
+    offset = sizeof(int32_t); // 预留总数据长的的位置；
     // 先写入数据包数量，4个字节
     memcpy(send_id_and_map_buff + offset, &pack_num, sizeof(int32_t));
     offset += sizeof(int32_t);
@@ -559,8 +611,38 @@ void TcpServer::create_or_search_room(int fd, room_t room)
     cout << "send success " << offset << endl;
 }
 
-void TcpServer::change_user_dir(int32_t id, direction_t dir)
+void TcpServer::change_user_dir(int32_t id, char *buffer, int32_t buffer_size)
 {
+    // 读数据
+    int32_t offset = 0;
+    int32_t pack_num;
+    int32_t data_size;
+
+    offset = protocol.get_head_info(buffer, buffer_size, &data_size, &pack_num);
+    if (offset == -1)
+    {
+        perror("room info read failed");
+        return;
+    }
+
+    // 读包
+    int pack_length;
+    int type;
+    char ch;
+    void *data = protocol.parse(buffer + offset, buffer_size - offset, &type, &pack_length);
+
+    if (type != DIRECTION)
+    {
+        perror("not expect data type");
+        free(data);
+        data = nullptr;
+        return;
+    }
+
+    direction_t dir = *((direction_t *)data);
+    free(data);
+    data = nullptr;
+
     auto iter = connections.find(id);
 
     if (iter != connections.end())
@@ -571,12 +653,13 @@ void TcpServer::change_user_dir(int32_t id, direction_t dir)
             room_iter->second.change_direct(iter->second.id, dir);
         }
     }
-
-    printf("move_x : %d, move_y : %d\n", dir.move_x, dir.move_y);
 }
 
 void TcpServer::run()
 {
+    thread server_status_thread(&TcpServer::server_status, this);
+    server_status_thread.detach();
+
     // 开始监听连接和接收用户输入
     acceptConnections();
 }
@@ -592,22 +675,37 @@ void TcpServer::handleClientData(int client_fd)
             if (errno == EAGAIN || errno == EWOULDBLOCK)
             {
                 // No more data to read (EAGAIN is expected for non-blocking I/O)
-                perror("No more data to read (EAGAIN is expected for non-blocking I/O)");
+                // perror("No more data to read (EAGAIN is expected for non-blocking I/O)");
                 break;
             }
             else
             {
                 // Read error
                 std::cerr << "Failed to read from client socket." << std::endl;
-                auto iter = connections.find(client_fd);
-                if (iter != connections.end())
+                int32_t room_id;
+                int32_t user_id;
                 {
-                    auto room = rooms.find(iter->second.room_id);
+                    lock_guard<mutex> lock(connection_mtx);
+                    auto iter = connections.find(client_fd);
+                    if (iter != connections.end())
+                    {
+                        room_id = iter->second.room_id;
+                        user_id = iter->second.id;
+                        connections.erase(client_fd);
+                    }
+                }
+
+                {
+                    lock_guard<mutex> lock(rooms_mtx);
+                    auto room = rooms.find(room_id);
                     if (room != rooms.end())
                     {
-                        room->second.close_user_connect(iter->second.id);
+                        room->second.close_user_connect(user_id);
+                        if (room->second.get_user_num() <= 0)
+                        {
+                            rooms.erase(room);
+                        }
                     }
-                    connections.erase(client_fd);
                 }
                 close(client_fd);
                 removeEpollEvent(epoll_fd, client_fd); // Ensure to remove from epoll
@@ -618,17 +716,30 @@ void TcpServer::handleClientData(int client_fd)
         {
             // Connection closed by the client
             std::cout << "Client on socket " << client_fd << " disconnected." << std::endl;
-
-            auto iter = connections.find(client_fd);
-            if (iter != connections.end())
+            int32_t room_id;
+            int32_t user_id;
             {
-                auto room = rooms.find(iter->second.room_id);
+                lock_guard<mutex> lock(connection_mtx);
+                auto iter = connections.find(client_fd);
+                if (iter != connections.end())
+                {
+                    room_id = iter->second.room_id;
+                    user_id = iter->second.id;
+                    connections.erase(client_fd);
+                }
+            }
+
+            {
+                lock_guard<mutex> lock(rooms_mtx);
+                auto room = rooms.find(room_id);
                 if (room != rooms.end())
                 {
-                    room->second.close_user_connect(iter->second.id);
-                    std::cout << "Client on socket " << client_fd << " has erased from room " << room->first << std::endl;
+                    room->second.close_user_connect(user_id);
+                    if (room->second.get_user_num() <= 0)
+                    {
+                        rooms.erase(room);
+                    }
                 }
-                connections.erase(client_fd);
             }
 
             close(client_fd);
@@ -637,14 +748,31 @@ void TcpServer::handleClientData(int client_fd)
         }
         else
         {
-            int32_t data_size;
-            int32_t pack_num;
+            int32_t request_code;
             int32_t offset = 0;
 
-            // 先读数据大小
-            memcpy(&data_size, recv_buff + offset, sizeof(int32_t));
+            // 读请求码
+            memcpy(&request_code, recv_buff + offset, sizeof(int32_t));
             offset += sizeof(int32_t);
 
+            switch (request_code)
+            {
+            case CHANGE_DIRECT_REQUEST:
+                change_user_dir(client_fd, recv_buff + offset, count - offset);
+                break;
+
+            case CREAT_OR_SEARCH_ROOMS_REQUEST:
+                create_or_search_room(client_fd, recv_buff + offset, count - offset);
+                break;
+
+            case GET_ROOMS_REQUEST:
+                send_rooms_info(client_fd, recv_buff + offset, count - offset);
+
+            default:
+                break;
+            }
+
+            /*
             // 读包数量
             memcpy(&pack_num, recv_buff + offset, sizeof(int32_t));
             offset += sizeof(int32_t);
@@ -660,7 +788,7 @@ void TcpServer::handleClientData(int client_fd)
                 if (data == nullptr)
                 {
                     // 传送失败的处理，待完善
-                    if (send_status_code(client_fd, ERROR_CODE))
+                    if (send_status_code(client_fd, STATUS_ERROR_CODE))
                     {
                         perror("read error code send error");
                         close(client_fd);
@@ -689,7 +817,7 @@ void TcpServer::handleClientData(int client_fd)
                 data = nullptr;
 
                 offset += pack_length;
-            }
+            }*/
         }
     }
 }

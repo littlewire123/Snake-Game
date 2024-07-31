@@ -73,6 +73,9 @@ public:
     template <typename T>
     char *serialize(const T &data, int32_t &data_size);
 
+    int32_t get_request_code(const char *buffer, int32_t buffer_size);
+    int get_head_info(const char *buffer, int32_t buffer_size, int32_t *data_size, int32_t *pack_num);  // 获取数据报头信息，失败返回-1，成功返回偏移量
+
 private:
     template <typename T>
     T *deserialize(const char *data, int32_t data_size);
@@ -94,6 +97,40 @@ private:
     room_t *parse_room(const char *data, int32_t data_size);
     status_t *parse_status(const char *data, int32_t data_size);
 };
+
+int32_t Protocol::get_request_code(const char *buffer, int32_t buffer_size)
+{
+    if (buffer_size < sizeof(int32_t))
+    {
+        return -1;
+    }
+    int32_t *code_ptr = deserialize<int32_t>(buffer, sizeof(int32_t));
+    int32_t code = (code_ptr == nullptr ? -1:*code_ptr);
+    delete code_ptr;
+    code_ptr = nullptr;
+
+    return code;
+}
+
+int Protocol::get_head_info(const char *buffer, int32_t buffer_size, int32_t *data_size, int32_t *pack_num)
+{
+    if (buffer_size < 2*sizeof(int32_t))
+    {
+        return -1;
+    }
+
+    int offset = 0;
+
+    //读数据总长
+    memcpy(data_size, buffer + offset, sizeof(int32_t));
+    offset += sizeof(int32_t);
+
+    // 读包数量
+    memcpy(pack_num, buffer + offset, sizeof(int32_t));
+    offset += sizeof(int32_t);
+
+    return offset;
+}
 
 template <typename T>
 char *Protocol::serialize(const T &data, int32_t &data_size) // 序列化的公共接口

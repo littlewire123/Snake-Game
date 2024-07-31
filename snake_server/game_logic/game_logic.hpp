@@ -45,6 +45,8 @@ public:
     {
         delete[] _foods.foods;
         delete[] _map.obstacle_pos;
+        _foods.foods = nullptr;
+        _map.obstacle_pos = nullptr;
     }
 
     map<int32_t, user_status> get_user_status();
@@ -54,6 +56,7 @@ public:
     void set_mode(int32_t mode) { game_mode = mode; }
     int32_t get_speed() { return game_speed; }
     map<int32_t, int> get_connecions() { return _connections; }
+    int32_t get_user_num(){return _connections.size();}
     bool init_game();
     bool end_game(); // 待设计和完善，暂时用不上
     bool change_direct(int32_t id, direction_t dir);

@@ -2,6 +2,7 @@
 
 int main()
 {
+    srand(time(nullptr));
     try
     {
         TcpServer server("0.0.0.0", 8080);
