@@ -490,6 +490,18 @@ void print_roommenu(int highlight)
     print_centered_menu(menu, menu_size, highlight);
 }
 
+void print_loginmenu(int highlight)
+{
+    const char *menu[] = {
+        "input your id",
+        "input your passwd",
+        "login game",
+        "sign up for a game"
+    };
+    int menu_size = sizeof(menu) / sizeof(menu[0]);
+    print_centered_menu(menu , menu_size , highlight);
+}
+
 // 获取键盘输入
 int getch()
 {
