@@ -16,6 +16,8 @@
 #define ID 4
 #define ROOM 5
 #define STATUSE 6
+#define USER_INFO 7
+#define GAME_DATA 8
 
 // 地图
 struct map_t
@@ -56,16 +58,30 @@ struct position_t
     int y;
 };
 
-//房间信息
+// 用户账号密码
+struct user_info_t
+{
+    char user_name[32];
+    char user_pwd[32];
+};
+
+// 房间信息
 struct room_t
 {
-    int id; //房间id
-    int model; //游戏模式
+    int id;    // 房间id
+    int model; // 游戏模式
 };
 
 struct status_t
 {
-    int code; //状态信息，1：成功，0：失败
+    int code; // 状态信息，1：成功，0：失败
+};
+
+struct file_t
+{
+	int file_size;    //文件字节数
+    int file_type;    //0：经典模式，1：挑战模式，2：道具模式
+	char *file;		  //文件本体
 };
 
 /**
@@ -170,8 +186,10 @@ struct direction_t *parse_direction(const char *data, int data_size);
 int parse_id(const char *data, int data_size);
 
 struct room_t *parse_room(const char *data, int data_size);
-struct status_t *parse_status(const char * data , int data_size);
+struct status_t *parse_status(const char *data, int data_size);
+struct user_info_t *parse_user_info(const char *data , int data_size);
 char *serialize_status(const struct status_t *data, int *data_size);
 char *serialize_room(const struct room_t *data, int *data_size);
+char *serialize_user_info(const struct user_info_t *data , int *data_size);
 
 #endif

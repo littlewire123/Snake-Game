@@ -175,6 +175,20 @@ struct room_t *parse_room(const char *data, int data_size)
     return room;
 }
 
+struct user_info_t *parse_user_info(const char *data, int data_size)
+{
+    if (data_size != sizeof(struct user_info_t))
+        return NULL;
+
+    struct user_info_t *user = (struct user_info_t *)malloc(sizeof(struct user_info_t));
+    if (user == NULL)
+        return NULL;
+
+    memcpy(user, data, data_size);
+
+    return user;
+}
+
 struct status_t *parse_status(const char *data, int data_size)
 {
     if (data_size != sizeof(struct status_t))
@@ -318,6 +332,30 @@ char *serialize_room(const struct room_t *data, int *data_size)
     offset += sizeof(int);
     memcpy(chs + offset, &data->model, sizeof(int));
     offset += sizeof(int);
+    return chs;
+}
+
+char *serialize_user_info(const struct user_info_t *data, int *data_size)
+{
+    *data_size = sizeof(struct user_info_t) + 8;
+    int cur_size = *data_size - 8;
+
+    char *chs = (char *)malloc(*data_size);
+    if (chs == NULL)
+    {
+        return NULL;
+    }
+
+    int offset = 0;
+    memcpy(chs + offset, &cur_size, sizeof(int)); // 数据长度
+    offset += sizeof(int);
+    int type = USER_INFO;
+    memcpy(chs + offset, &type, sizeof(int)); // 数据类型
+    offset += sizeof(int);
+
+    memcpy(chs + offset , data , sizeof(struct user_info_t));
+    offset += sizeof(struct user_info_t);
+
     return chs;
 }
 
