@@ -1,0 +1,59 @@
+4cab251 HEAD@{0}: reset: moving to 4cab2512a591b13a70174d646aa869ec8983718d
+329128b HEAD@{1}: reset: moving to 329128b9b39852fe0a60ddebaeb68a117fa8188d
+4cab251 HEAD@{2}: reset: moving to 4cab2512a591b13a70174d646aa869ec8983718d
+fe50ca8 HEAD@{3}: reset: moving to fe50ca87a14397028529c42d7b26bd785ea112ea
+28f8617 HEAD@{4}: commit: 多次创房间的bug，和云存档
+fe50ca8 HEAD@{5}: commit: 完善了前端界面的开发，登录和注册
+4cab251 HEAD@{6}: commit: 登录业务前的一个版本
+329128b HEAD@{7}: commit: 完善搜索房间
+2126806 HEAD@{8}: commit: 大致完成搜索房间和创造房间
+63f94c8 HEAD@{9}: commit: 联机模式创建房间初型
+5674a35 HEAD@{10}: commit: 改善了界面居中显示，并使用按键选择模式，并改善单机游戏的界面居中显示
+b4a35d4 HEAD@{11}: commit: 修改了联网模式的玩家按键线程
+13242b0 HEAD@{12}: commit: 完成道具模式联网
+407dcd3 HEAD@{13}: commit: 增加挑战模式联机
+79c7f8d HEAD@{14}: commit: 验收2.0
+be47f47 HEAD@{15}: commit: 改善游戏界面
+5d7096e HEAD@{16}: commit: 优化界面
+1102125 HEAD@{17}: commit: 优化了一些代码
+cca48d7 HEAD@{18}: commit: 修改服务器地图大小
+2e4f8c1 HEAD@{19}: commit (merge): Merge branch 'master' into jyg
+3e4d62b HEAD@{20}: checkout: moving from master to jyg
+df2b293 HEAD@{21}: checkout: moving from jyg to master
+3e4d62b HEAD@{22}: commit: 修改地图大小
+5fba099 HEAD@{23}: checkout: moving from master to jyg
+df2b293 HEAD@{24}: commit: 修改了about_game
+ee9c8dd HEAD@{25}: commit: clear for online
+b724b7f HEAD@{26}: pull: Fast-forward
+8287d98 HEAD@{27}: checkout: moving from jyg to master
+5fba099 HEAD@{28}: checkout: moving from master to jyg
+8287d98 HEAD@{29}: checkout: moving from jyg to master
+5fba099 HEAD@{30}: commit: 验收版本1.0
+4693877 HEAD@{31}: commit: 完成联机玩法，但是延迟很高
+87f12ef HEAD@{32}: commit (merge): Merge branch 'master' into jyg
+6704e51 HEAD@{33}: commit: wu
+02c961f HEAD@{34}: checkout: moving from master to jyg
+8287d98 HEAD@{35}: pull: Fast-forward
+0f2438e HEAD@{36}: checkout: moving from jyg to master
+02c961f HEAD@{37}: commit: 无
+7f2d4aa HEAD@{38}: commit: 添加联机功能
+5908108 HEAD@{39}: commit: 添加注释和改变打印颜色
+d9dbf98 HEAD@{40}: commit: 修改了一些测试bug
+07b7772 HEAD@{41}: commit: 修改上一个版本
+0a12838 HEAD@{42}: commit: 所有功能大致完成
+044f3bb HEAD@{43}: commit: 道具模式基本完成，剩下增加长度
+9e006d8 HEAD@{44}: commit: 道具模式就差效果和储存
+05b078a HEAD@{45}: commit: 道具模式初型
+5620cde HEAD@{46}: commit: 完成挑战模式的存储和改善结束游戏和暂停游戏的逻辑
+44677d4 HEAD@{47}: commit: 增加了经典模式的存储，和区分了经典模式和挑战模式的身体，并改成全局变量
+4a33080 HEAD@{48}: commit: 挑战模式完善，分类打印，拆分move函数
+0f2438e HEAD@{49}: merge master: Fast-forward
+da0a955 HEAD@{50}: checkout: moving from master to jyg
+0f2438e HEAD@{51}: commit (merge): Merge branch 'jyg'
+0a3775d HEAD@{52}: pull: Fast-forward
+53ab404 HEAD@{53}: checkout: moving from jyg to master
+da0a955 HEAD@{54}: commit: 添加挑战模式
+53ab404 HEAD@{55}: checkout: moving from jyg to jyg
+53ab404 HEAD@{56}: checkout: moving from jyg to jyg
+53ab404 HEAD@{57}: checkout: moving from master to jyg
+53ab404 HEAD@{58}: clone: from https://github.com/littlewire123/Snake-Game.git
