@@ -15,6 +15,8 @@
 #include <thread>
 #include <mutex>
 #include <map>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include "../protocol/protocol.hpp"
 #include "../game_logic/game_logic.hpp"
@@ -41,13 +43,16 @@ public:
     const static int32_t GET_ROOMS_REQUEST = 2;
     const static int32_t REGISTER_REQUEST = 3;
     const static int32_t LOGIN_REQUEST = 4;
+    const static int32_t UPLOAD_SAVE_DATA = 5;
+    const static int32_t DOWNLOAD_CLASSIC_SAVE_DATA = 6;
+    const static int32_t DOWNLOAD_CHALLENGE_SAVE_DATA = 7;
+    const static int32_t DOWNLOAD_POWER_UP_SAVE_DATA = 8;
 
     tcp_server(const std::string &ip, int port);
     ~tcp_server();
 
     bool bindAndListen();
     void run();
-    void handleClientData(int client_fd);
 
 private:
     int createSocket();
@@ -55,6 +60,7 @@ private:
     void addEpollEvent(int epoll_fd, int fd, uint32_t events);
     void removeEpollEvent(int epoll_fd, int fd);
     void acceptConnections();
+    void handleClientData(int client_fd);
     void game_logic_handle(int32_t room_id);
     int32_t make_user_id();
     bool check_user_id(int32_t id);
@@ -63,6 +69,9 @@ private:
     void send_snakes_and_foods_data(int client, game_logic &game);
     bool send_status_code(int fd, int32_t code);
     void server_status();
+    bool is_dir_exist(string path);
+    bool write_file(string filepath, const char *data, int file_size);
+    file_t *read_file(const char *filename);
 
     // 事件处理函数
     void create_or_search_room(int fd, char *buffer, int32_t buffer_size);
@@ -70,6 +79,10 @@ private:
     void send_rooms_info(int fd, char *buffer, int32_t buffer_size);
     void regiser(int fd, char *buffer, int32_t buffer_size);
     void login(int fd, char *buffer, int32_t buffer_size);
+    void upload_save_data(int fd, char *buffer, int32_t buffer_size);
+    void download_classic_save_data(int fd, char *buffer, int32_t buffer_size);
+    void download_challenge_save_data(int fd, char *buffer, int32_t buffer_size);
+    void download_power_up_save_data(int fd, char *buffer, int32_t buffer_size);
 
 private:
     int server_fd;
@@ -86,12 +99,15 @@ private:
     // 单独设置缓冲区可以防止竞态
     char send_buff[51200];
     char send_id_and_map_buff[1024];
-    char recv_buff[1024];
+    char recv_buff[10240];
+
+    const string SAVE_DATA_DIR = "../save_data/";
 
     mutex connection_mtx; // 锁，防止竞态
     mutex rooms_mtx;
     map<int, connect_user_info_t> connections; // 存放连接状态，主键套接字，值为用户信息
     map<int32_t, game_logic> rooms;            // 存放房间，主键房间id，值为游戏逻辑类
+    map<int, string> login_users;              // 已登录的用户，主键套接字，值为用户名
 };
 
 tcp_server::tcp_server(const std::string &ip, int port)
@@ -464,19 +480,21 @@ void tcp_server::regiser(int fd, char *buffer, int32_t buffer_size)
     free(data);
     data = nullptr;
 
-    cout<<"user_name : " << user_info.user_name<<endl<<"user_pwd : "<<user_info.user_pwd<<endl;
+    cout << "user_name : " << user_info.user_name << endl
+         << "user_pwd : " << user_info.user_pwd << endl;
 
-    //事件处理
+    // 事件处理
     if (auth.Register(user_info))
     {
         send_status_code(fd, STATUS_SUCCESS_CODE);
-        cout<<"register success\n";
+        cout << "register success\n";
     }
     else
     {
         send_status_code(fd, STATUS_ERROR_CODE);
     }
 }
+
 void tcp_server::login(int fd, char *buffer, int32_t buffer_size)
 {
     // 读数据
@@ -515,12 +533,14 @@ void tcp_server::login(int fd, char *buffer, int32_t buffer_size)
     free(data);
     data = nullptr;
 
-    cout<<"user_name : " << user_info.user_name<<endl<<"user_pwd : "<<user_info.user_pwd<<endl;
+    cout << "user_name : " << user_info.user_name << endl
+         << "user_pwd : " << user_info.user_pwd << endl;
 
-    //事件处理
+    // 事件处理
     if (auth.Login(user_info))
     {
         send_status_code(fd, STATUS_SUCCESS_CODE);
+        login_users.insert({fd, string(user_info.user_name)});
     }
     else
     {
@@ -534,7 +554,7 @@ void tcp_server::server_status()
     while (true)
     {
         printf("========================================\n");
-        
+
         printf("%-*s | %-*d\n", 20, "room num", 20, rooms.size());
         printf("%-*s | %-*d\n", 20, "connection num", 20, connections.size());
 
@@ -557,6 +577,230 @@ void tcp_server::server_status()
 
         sleep(3);
     }
+}
+
+bool tcp_server::is_dir_exist(string path)
+{
+    struct stat info;
+    if (stat(path.c_str(), &info) != 0)
+    {
+        return false; // 目录不存在
+    }
+    else if (info.st_mode & S_IFDIR)
+    {
+        return true; // 目录存在
+    }
+    else
+    {
+        return false; // 路径存在，但不是目录
+    }
+}
+
+bool tcp_server::write_file(string filepath, const char *data, int file_size)
+{
+    FILE *file = fopen(filepath.c_str(), "w");
+
+    if (file == NULL)
+    {
+        perror("save data open failed");
+        return false;
+    }
+
+    if (fwrite(data, sizeof(char), file_size, file) != file_size)
+    {
+        perror("file write failed");
+        fclose(file);
+        return false;
+    }
+
+    fclose(file);
+
+    return true;
+}
+
+file_t *tcp_server::read_file(const char *filename)
+{
+    FILE *file = fopen(filename, "rb");
+    if (!file)
+    {
+        perror("Failed to open file");
+        return NULL;
+    }
+
+    // 获取文件大小
+    fseek(file, 0, SEEK_END);
+    long file_size = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    // 为文件内容分配内存
+    char *file_content = (char *)malloc(file_size);
+    if (!file_content)
+    {
+        perror("Failed to allocate memory");
+        fclose(file);
+        return NULL;
+    }
+
+    // 读取文件内容
+    size_t read_size = fread(file_content, sizeof(char), file_size, file);
+    if (read_size != file_size)
+    {
+        perror("Failed to read file");
+        free(file_content);
+        fclose(file);
+        return NULL;
+    }
+
+    // 关闭文件
+    fclose(file);
+
+    // 分配并填充结构体
+    struct file_t *file_info = (struct file_t *)malloc(sizeof(struct file_t));
+    if (!file_info)
+    {
+        perror("Failed to allocate memory for file_t");
+        free(file_content);
+        return NULL;
+    }
+
+    file_info->file_size = file_size;
+    file_info->file = file_content;
+
+    return file_info;
+}
+
+void tcp_server::upload_save_data(int fd, char *buffer, int32_t buffer_size)
+{
+    // 验证是否登录
+    auto iter = login_users.find(fd);
+    if (iter == login_users.end())
+    {
+        if (!send_status_code(fd, STATUS_ERROR_CODE))
+        {
+            perror("not login error code send error");
+        }
+        return;
+    }
+    // 读数据
+    int32_t offset = 0;
+    int32_t pack_num;
+    int32_t data_size;
+
+    offset = protocol.get_head_info(buffer, buffer_size, &data_size, &pack_num);
+    if (offset == -1)
+    {
+        perror("room info read failed");
+        return;
+    }
+
+    // 读包
+    int pack_length;
+    int type;
+    char ch;
+
+    void *data = protocol.parse(buffer + offset, buffer_size - offset, &type, &pack_length);
+
+    if (data == nullptr)
+    {
+        if (!send_status_code(fd, STATUS_ERROR_CODE))
+        {
+            perror("not login error code send error");
+        }
+        perror("game file parse failed");
+        return;
+    }
+
+    if (type != GAME_FILE)
+    {
+        if (!send_status_code(fd, STATUS_ERROR_CODE))
+        {
+            perror("not login error code send error");
+        }
+        perror("not expect data type");
+        free(data);
+        data = nullptr;
+        return;
+    }
+
+    file_t game_file = *((file_t *)data);
+    free(data);
+    data = nullptr;
+
+    string filepath = SAVE_DATA_DIR + iter->second + to_string(game_file.file_type);
+    cout << filepath << endl;
+
+    if (!is_dir_exist(SAVE_DATA_DIR))
+    {
+        if (mkdir(SAVE_DATA_DIR.c_str(), 0755) != 0)
+        {
+            perror("save data dir create failed\n");
+            if (!send_status_code(fd, STATUS_ERROR_CODE))
+            {
+                perror("not login error code send error");
+            }
+            return;
+        }
+    }
+
+    if (!write_file(filepath, game_file.file, game_file.file_size))
+    {
+        // 以后完善错误处理
+    }
+    free(game_file.file);
+    game_file.file = nullptr;
+}
+
+void tcp_server::download_classic_save_data(int fd, char *buffer, int32_t buffer_size)
+{
+    auto iter = login_users.find(fd);
+    if (iter == login_users.end())
+    {
+        if (!send_status_code(fd, STATUS_ERROR_CODE))
+        {
+            perror("not login error code send error");
+        }
+        return;
+    }
+    string filepath = SAVE_DATA_DIR;
+    filepath += iter->second + to_string(game_logic::CLASSIC);
+    file_t *file = read_file(filepath.c_str());
+    file->file_type = game_logic::CLASSIC;
+
+    int32_t pack_num = 1;
+    char ch = '\0';               // 包之间的分隔符
+    int offset = sizeof(int32_t); // 预留总数据长的的位置；
+
+    int32_t data_size;
+
+    // 先写入数据包数量，4个字节
+    memcpy(send_buff + offset, &pack_num, sizeof(int32_t));
+    offset += sizeof(int32_t);
+
+    // 每个数据包
+    // 写入文件包
+    char *temp = protocol.serialize(*file, data_size);
+    if (temp == nullptr)
+    {
+        cout << "serialize failed\n";
+    }
+    memcpy(send_buff + offset, temp, data_size);
+    offset += data_size;
+
+    // 写入包分隔符
+    memcpy(send_buff + offset, &ch, sizeof(char));
+    offset += sizeof(char);
+
+    if (send(fd, send_buff, offset, 0) <= 0)
+    {
+        perror("save data send error");
+    }
+    
+}
+void tcp_server::download_challenge_save_data(int fd, char *buffer, int32_t buffer_size)
+{
+}
+void tcp_server::download_power_up_save_data(int fd, char *buffer, int32_t buffer_size)
+{
 }
 
 void tcp_server::create_or_search_room(int fd, char *buffer, int32_t buffer_size)
@@ -601,7 +845,7 @@ void tcp_server::create_or_search_room(int fd, char *buffer, int32_t buffer_size
             lock_guard<mutex> lock(rooms_mtx);
             room_id = make_room_id();
 
-            rooms.insert({room_id, game_logic(room.model)});
+            rooms.emplace(room_id, game_logic(room.model));
         }
         logic_ptr = &(rooms.find(room_id)->second);
         // 初始化游戏
@@ -763,8 +1007,8 @@ void tcp_server::change_user_dir(int fd, char *buffer, int32_t buffer_size)
 
 void tcp_server::run()
 {
-    //thread server_status_thread(&tcp_server::server_status, this);
-    //server_status_thread.detach();
+    // thread server_status_thread(&tcp_server::server_status, this);
+    // server_status_thread.detach();
 
     // 开始监听连接和接收用户输入
     acceptConnections();
@@ -874,12 +1118,19 @@ void tcp_server::handleClientData(int client_fd)
 
             case GET_ROOMS_REQUEST:
                 send_rooms_info(client_fd, recv_buff + offset, count - offset);
+                break;
 
             case REGISTER_REQUEST:
                 regiser(client_fd, recv_buff + offset, count - offset);
+                break;
 
             case LOGIN_REQUEST:
                 login(client_fd, recv_buff + offset, count - offset);
+                break;
+
+            case UPLOAD_SAVE_DATA:
+                upload_save_data(client_fd, recv_buff + offset, count - offset);
+                break;
 
             default:
                 break;
