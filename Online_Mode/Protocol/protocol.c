@@ -428,16 +428,14 @@ char *serlize_game_data(int *data_size, const char *path, int file_type)
     *data_size = sizeof(int) * 2 + 8 + file->file_size;
     int cur_size = *data_size - 8;
 
-    char *chs = (char *)malloc(*data_size);
+    char *chs = (char *)malloc(sizeof(char) * (*data_size));
     if (chs == NULL)
         return NULL;
 
     int offset = 0;
     memcpy(chs + offset, &cur_size, sizeof(int));
-    getchar();
-    printf("=============%d\n",cur_size);
-    getchar();
     offset += sizeof(int);
+
     int type = GAME_DATA;
     memcpy(chs + offset, &type, sizeof(int));
     offset += sizeof(int);
