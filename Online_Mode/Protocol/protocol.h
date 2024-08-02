@@ -8,7 +8,11 @@
 #include <termios.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
+
+//type
 #define MAP 0
 #define SNAKE 1
 #define FOOD 2
@@ -79,9 +83,9 @@ struct status_t
 
 struct file_t
 {
-	int file_size;    //文件字节数
-    int file_type;    //0：经典模式，1：挑战模式，2：道具模式
-	char *file;		  //文件本体
+    int file_size; // 文件字节数
+    int file_type; // 0：经典模式，1：挑战模式，2：道具模式
+    char *file;    // 文件本体
 };
 
 /**
@@ -185,11 +189,77 @@ struct direction_t *parse_direction(const char *data, int data_size);
  */
 int parse_id(const char *data, int data_size);
 
+/**
+ * @brief 解析字节流为 room_t 结构体。
+ *
+ * @param data 要解析的字节流。
+ * @param data_size 字节流大小。
+ * @return struct room_t* 返回解析后的 room_t 结构体指针，如果解析失败则返回 NULL。
+ */
 struct room_t *parse_room(const char *data, int data_size);
+
+/**
+ * @brief 解析字节流为 status_t 结构体。
+ *
+ * @param data 要解析的字节流。
+ * @param data_size 字节流大小。
+ * @return struct status_t* 返回解析后的 status_t 结构体指针，如果解析失败则返回 NULL。
+ */
 struct status_t *parse_status(const char *data, int data_size);
-struct user_info_t *parse_user_info(const char *data , int data_size);
+
+/**
+ * @brief 解析字节流为 user_info_t 结构体。
+ *
+ * @param data 要解析的字节流。
+ * @param data_size 字节流大小。
+ * @return struct user_info_t* 返回解析后的 user_info_t 结构体指针，如果解析失败则返回 NULL。
+ */
+struct user_info_t *parse_user_info(const char *data, int data_size);
+
+/**
+ * @brief 解析字节流为 file_t 结构体。
+ *
+ * @param data 要解析的字节流。
+ * @param data_size 字节流大小。
+ * @return struct file_t* 返回解析后的 file_t 结构体指针，如果解析失败则返回 NULL。
+ */
+struct file_t *parse_game_data(const char *data, int data_size);
+
+/**
+ * @brief 序列化 status_t 结构体为字节流。
+ *
+ * @param data 要序列化的 status_t 结构体。
+ * @param data_size 返回的字节流大小。
+ * @return char* 返回序列化后的字节流，如果序列化失败则返回 NULL。
+ */
 char *serialize_status(const struct status_t *data, int *data_size);
+
+/**
+ * @brief 序列化 room_t 结构体为字节流。
+ *
+ * @param data 要序列化的 room_t 结构体。
+ * @param data_size 返回的字节流大小。
+ * @return char* 返回序列化后的字节流，如果序列化失败则返回 NULL。
+ */
 char *serialize_room(const struct room_t *data, int *data_size);
-char *serialize_user_info(const struct user_info_t *data , int *data_size);
+
+/**
+ * @brief 序列化 user_info_t 结构体为字节流。
+ *
+ * @param data 要序列化的 user_info_t 结构体。
+ * @param data_size 返回的字节流大小。
+ * @return char* 返回序列化后的字节流，如果序列化失败则返回 NULL。
+ */
+char *serialize_user_info(const struct user_info_t *data, int *data_size);
+
+/**
+ * @brief 序列化文件为字节流。
+ *
+ * @param data_size 返回的字节流大小。
+ * @param path 要序列化的文件路径。
+ * @param file_type 文件类型。
+ * @return char* 返回序列化后的字节流，如果序列化失败则返回 NULL。
+ */
+char *serlize_game_data(int *data_size, const char *path, int file_type);
 
 #endif

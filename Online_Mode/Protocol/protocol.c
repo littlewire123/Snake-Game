@@ -202,6 +202,25 @@ struct status_t *parse_status(const char *data, int data_size)
     return status;
 }
 
+struct file_t *parse_game_data(const char *data, int data_size)
+{
+    struct file_t *file = (struct file_t *)malloc(sizeof(struct file_t));
+    if (file == NULL)
+        return NULL;
+
+    int offset = 0;
+    memcpy(&file->file_size, data + offset, sizeof(int));
+    offset += sizeof(int);
+
+    memcpy(&file->file_type, data + offset, sizeof(int));
+    offset += sizeof(int);
+
+    file->file = (char *)malloc(sizeof(char) * file->file_size);
+    offset += file->file_size;
+
+    return file;
+}
+
 int parse_id(const char *data, int data_size)
 {
     if (data_size != sizeof(int))
@@ -353,7 +372,7 @@ char *serialize_user_info(const struct user_info_t *data, int *data_size)
     memcpy(chs + offset, &type, sizeof(int)); // 数据类型
     offset += sizeof(int);
 
-    memcpy(chs + offset , data , sizeof(struct user_info_t));
+    memcpy(chs + offset, data, sizeof(struct user_info_t));
     offset += sizeof(struct user_info_t);
 
     return chs;
@@ -378,6 +397,61 @@ char *serialize_status(const struct status_t *data, int *data_size)
     memcpy(chs + offset, data, sizeof(int));
     offset += sizeof(sizeof(struct status_t));
 
+    return chs;
+}
+
+char *serlize_game_data(int *data_size, const char *path, int file_type)
+{
+    FILE *fp = fopen(path, "r");
+    if (fp == NULL)
+    {
+        return NULL;
+    }
+
+    struct file_t *file = (struct file_t *)malloc(sizeof(struct file_t));
+    if (file == NULL)
+        return NULL;
+
+    struct stat *file_info = NULL;
+    file_info = (struct stat *)malloc(sizeof(struct stat));
+    stat(path, file_info);
+
+    file->file_size = file_info->st_size;
+    file->file_type = file_type;
+
+    file->file = (char *)malloc(sizeof(char) * file->file_size);
+    if (fread(file->file, file->file_size, 1, fp) != 1)
+    {
+        return NULL;
+    }
+
+    *data_size = sizeof(int) * 2 + 8 + file->file_size;
+    int cur_size = *data_size - 8;
+
+    char *chs = (char *)malloc(*data_size);
+    if (chs == NULL)
+        return NULL;
+
+    int offset = 0;
+    memcpy(chs + offset, &cur_size, sizeof(int));
+    getchar();
+    printf("=============%d\n",cur_size);
+    getchar();
+    offset += sizeof(int);
+    int type = GAME_DATA;
+    memcpy(chs + offset, &type, sizeof(int));
+    offset += sizeof(int);
+
+    memcpy(chs + offset, &file->file_size, sizeof(int));
+    offset += sizeof(int);
+
+    memcpy(chs + offset, &file->file_type, sizeof(int));
+    offset += sizeof(int);
+
+    memcpy(chs + offset, file->file, file->file_size);
+    offset += file->file_size;
+
+    fclose(fp);
     return chs;
 }
 
