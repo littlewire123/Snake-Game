@@ -43,8 +43,14 @@ public:
 
     ~game_logic()
     {
-        delete[] _foods.foods;
-        delete[] _map.obstacle_pos;
+        if (_foods.foods != nullptr)
+        {
+            free(_foods.foods);
+        }
+        if (_map.obstacle_pos != nullptr)
+        {
+            free(_map.obstacle_pos);
+        }
         _foods.foods = nullptr;
         _map.obstacle_pos = nullptr;
     }
@@ -56,7 +62,7 @@ public:
     void set_mode(int32_t mode) { game_mode = mode; }
     int32_t get_speed() { return game_speed; }
     map<int32_t, int> get_connecions() { return _connections; }
-    int32_t get_user_num(){return _connections.size();}
+    int32_t get_user_num() { return _connections.size(); }
     bool init_game();
     bool end_game(); // 待设计和完善，暂时用不上
     bool change_direct(int32_t id, direction_t dir);
@@ -65,9 +71,9 @@ public:
     bool add_user(int32_t id, int fd);
     bool close_user_connect(int32_t id);
 
-    static const int32_t CLASSIC = 1;
-    static const int32_t CHALLENGE = 2;
-    static const int32_t POWER_UP = 3;
+    static const int32_t CLASSIC = 0;
+    static const int32_t CHALLENGE = 1;
+    static const int32_t POWER_UP = 2;
     static const int32_t MOVE_STEP = 3;        // 默认更新移动次数，即检验次数到达后才移动没有特殊效果的蛇
     static const int32_t SPEED_UP_STEP = 40;   // 加速生效步数
     static const int32_t SPEED_DOWN_STEP = 80; // 减速生效步数

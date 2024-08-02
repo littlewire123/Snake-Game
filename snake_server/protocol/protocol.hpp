@@ -63,6 +63,14 @@ struct user_info_t
 	char user_pwd[32];
 };
 
+//文件
+struct file_t
+{
+	int file_size;    //文件字节数
+    int file_type;    //0：经典模式，1：挑战模式，2：道具模式
+	char *file;		  //文件本体
+};
+
 const static int MAP = 0;
 const static int SNAKE = 1;
 const static int FOOD = 2;
@@ -71,6 +79,7 @@ const static int ID = 4;
 const static int ROOM = 5;
 const static int STATUS = 6;
 const static int USER_INFO = 7;
+const static int GAME_FILE = 8;
 
 // Protocol 类定义
 class Protocol
@@ -97,6 +106,7 @@ private:
     char *serialize_impl(const room_t &data, int32_t &data_size);
     char *serialize_impl(const status_t &data, int32_t &data_size);
     char *serialize_impl(const user_info_t &data, int32_t &data_size);
+    char *serialize_impl(const file_t &data, int32_t &data_size);
 
     // 解析
     map_t *parse_map(const char *data, int32_t data_size);
@@ -106,6 +116,7 @@ private:
     room_t *parse_room(const char *data, int32_t data_size);
     status_t *parse_status(const char *data, int32_t data_size);
     user_info_t *parse_user_info(const char *data, int32_t data_size);
+    file_t *parse_file(const char *data, int32_t data_size);
 };
 
 int32_t Protocol::get_request_code(const char *buffer, int32_t buffer_size)
@@ -157,9 +168,12 @@ void *Protocol::parse(const char *buffer, int32_t buffer_size, int32_t *target_t
     char ch;   //用来读包尾
     int32_t data_length = *deserialize<int32_t>(buffer, sizeof(int32_t));
     *target_type = *deserialize<int>(buffer + sizeof(int32_t), sizeof(int32_t));
+    printf("buffer_size : %d, data_length : %d, target_type : %d\n", buffer_size, data_length, *target_type);
 
     if (buffer_size - sizeof(int32_t) * 2 < data_length)
+    {
         return nullptr; // 检查数据长度是否匹配
+    }
 
     const char *data = buffer + 2 * sizeof(int32_t);
     *pack_length = data_length + 2 * sizeof(int32_t) + 1;   //加一是因为包尾还有个\0
@@ -169,6 +183,7 @@ void *Protocol::parse(const char *buffer, int32_t buffer_size, int32_t *target_t
 
     if (ch != '\0')
     {
+        perror("size too short \0");
         return nullptr;
     }
 
@@ -188,6 +203,8 @@ void *Protocol::parse(const char *buffer, int32_t buffer_size, int32_t *target_t
         return parse_status(data, data_length);
     case USER_INFO:
         return parse_user_info(data, data_length);
+    case GAME_FILE:
+        return parse_file(data, data_length);
     default:
         return nullptr;
     }
@@ -312,6 +329,58 @@ snake_data_t *Protocol::parse_snake_data(const char *data, int32_t data_size)
     memcpy(snake->snake_pos, data + offset, position_count * sizeof(position_t));
 
     return snake;
+}
+
+
+file_t *Protocol::parse_file(const char *data, int32_t data_size)
+{
+    // 确保传入的数据大小足够
+    if (data_size < sizeof(int32_t) * 2)
+    {
+        return nullptr;
+    }
+
+    file_t *file = new file_t;
+    if (file == nullptr)
+    {
+        return nullptr;
+    }
+
+    int32_t offset = 0;
+    file->file_size = *deserialize<int32_t>(data + offset, sizeof(int32_t));
+    offset += sizeof(int32_t);
+    file->file_type = *deserialize<int32_t>(data + offset, sizeof(int32_t));
+    offset += sizeof(int32_t);
+
+    int32_t count = file->file_size;
+    int32_t expected_size = sizeof(int32_t) * 2 + count * sizeof(position_t);
+
+    // 确保数据大小匹配
+    if (data_size != expected_size)
+    {
+        delete file;
+        return nullptr;
+    }
+
+    file->file = new char[count];
+    if (file->file == nullptr)
+    {
+        delete file;
+        return nullptr;
+    }
+
+    printf("count : %d\n", count);
+
+    if (count > 0)
+    {
+        memcpy(file->file, data + offset, count * sizeof(char));
+    }
+    else
+    {
+        file->file = NULL;
+    }
+
+    return file;
 }
 
 room_t *Protocol::parse_room(const char *data, int32_t data_size)
@@ -555,6 +624,32 @@ char *Protocol::serialize_impl(const user_info_t &data, int32_t &data_size)
     memcpy(chs + offset, &USER_INFO, sizeof(int)); // 数据类型
     offset += sizeof(int);
     memcpy(chs + offset, &data, sizeof(user_info_t));
+
+    return chs;
+}
+
+//序列化文件
+char *Protocol::serialize_impl(const file_t &data, int32_t &data_size)
+{
+    data_size = sizeof(int32_t) + data.file_size * sizeof(char) + 2 * sizeof(int32_t);
+    int32_t cur_size = data_size - 2 * sizeof(int32_t);
+
+    char *chs = new char[data_size];
+    if (chs == nullptr)
+    {
+        return nullptr;
+    }
+
+    int32_t offset = 0;
+    memcpy(chs + offset, &cur_size, sizeof(int32_t)); // 数据长度
+    offset += sizeof(int32_t);
+    memcpy(chs + offset, &GAME_FILE, sizeof(int)); // 数据类型
+    offset += sizeof(int);
+    memcpy(chs + offset, &data.file_size, sizeof(int32_t));
+    offset += sizeof(int32_t);
+    memcpy(chs + offset, &data.file_type, sizeof(int32_t));
+    offset += sizeof(int32_t);
+    memcpy(chs + offset, data.file, data.file_size * sizeof(char));
 
     return chs;
 }
