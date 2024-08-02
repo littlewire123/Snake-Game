@@ -56,6 +56,13 @@ struct status_t
     int32_t code;  //0失败，1成功
 };
 
+//用户账号密码
+struct user_info_t
+{
+	char user_name[32];
+	char user_pwd[32];
+};
+
 const static int MAP = 0;
 const static int SNAKE = 1;
 const static int FOOD = 2;
@@ -63,6 +70,7 @@ const static int DIRECTION = 3;
 const static int ID = 4;
 const static int ROOM = 5;
 const static int STATUS = 6;
+const static int USER_INFO = 7;
 
 // Protocol 类定义
 class Protocol
@@ -72,6 +80,9 @@ public:
 
     template <typename T>
     char *serialize(const T &data, int32_t &data_size);
+
+    int32_t get_request_code(const char *buffer, int32_t buffer_size);
+    int get_head_info(const char *buffer, int32_t buffer_size, int32_t *data_size, int32_t *pack_num);  // 获取数据报头信息，失败返回-1，成功返回偏移量
 
 private:
     template <typename T>
@@ -85,6 +96,7 @@ private:
     char *serialize_impl(const int32_t &data, int32_t &data_size);
     char *serialize_impl(const room_t &data, int32_t &data_size);
     char *serialize_impl(const status_t &data, int32_t &data_size);
+    char *serialize_impl(const user_info_t &data, int32_t &data_size);
 
     // 解析
     map_t *parse_map(const char *data, int32_t data_size);
@@ -93,7 +105,42 @@ private:
     direction_t *parse_direction(const char *data, int32_t data_size);
     room_t *parse_room(const char *data, int32_t data_size);
     status_t *parse_status(const char *data, int32_t data_size);
+    user_info_t *parse_user_info(const char *data, int32_t data_size);
 };
+
+int32_t Protocol::get_request_code(const char *buffer, int32_t buffer_size)
+{
+    if (buffer_size < sizeof(int32_t))
+    {
+        return -1;
+    }
+    int32_t *code_ptr = deserialize<int32_t>(buffer, sizeof(int32_t));
+    int32_t code = (code_ptr == nullptr ? -1:*code_ptr);
+    delete code_ptr;
+    code_ptr = nullptr;
+
+    return code;
+}
+
+int Protocol::get_head_info(const char *buffer, int32_t buffer_size, int32_t *data_size, int32_t *pack_num)
+{
+    if (buffer_size < 2*sizeof(int32_t))
+    {
+        return -1;
+    }
+
+    int offset = 0;
+
+    //读数据总长
+    memcpy(data_size, buffer + offset, sizeof(int32_t));
+    offset += sizeof(int32_t);
+
+    // 读包数量
+    memcpy(pack_num, buffer + offset, sizeof(int32_t));
+    offset += sizeof(int32_t);
+
+    return offset;
+}
 
 template <typename T>
 char *Protocol::serialize(const T &data, int32_t &data_size) // 序列化的公共接口
@@ -139,6 +186,8 @@ void *Protocol::parse(const char *buffer, int32_t buffer_size, int32_t *target_t
         return parse_room(data, data_length);
     case STATUS:
         return parse_status(data, data_length);
+    case USER_INFO:
+        return parse_user_info(data, data_length);
     default:
         return nullptr;
     }
@@ -275,14 +324,13 @@ status_t *Protocol::parse_status(const char *data, int32_t data_size)
     return deserialize<status_t>(data, data_size);
 }
 
+user_info_t *Protocol::parse_user_info(const char *data, int32_t data_size)
+{
+    return deserialize<user_info_t>(data, data_size);
+}
+
 food_t *Protocol::parse_food(const char *data, int32_t data_size)
 {
-    // 确保传入的数据大小足够
-    if (data_size < sizeof(int32_t))
-    {
-        return nullptr;
-    }
-
     food_t *food = new food_t;
     if (food == nullptr)
     {
@@ -486,6 +534,27 @@ char *Protocol::serialize_impl(const status_t &data, int32_t &data_size)
     memcpy(chs + offset, &STATUS, sizeof(int)); // 数据类型
     offset += sizeof(int);
     memcpy(chs + offset, &data, sizeof(status_t));
+
+    return chs;
+}
+
+char *Protocol::serialize_impl(const user_info_t &data, int32_t &data_size)
+{
+    data_size = sizeof(int) + 8;
+    int32_t cur_size = data_size - 8;
+
+    char *chs = new char[data_size];
+    if (chs == nullptr)
+    {
+        return nullptr;
+    }
+
+    int32_t offset = 0;
+    memcpy(chs + offset, &cur_size, sizeof(int32_t)); // 数据长度
+    offset += sizeof(int32_t);
+    memcpy(chs + offset, &USER_INFO, sizeof(int)); // 数据类型
+    offset += sizeof(int);
+    memcpy(chs + offset, &data, sizeof(user_info_t));
 
     return chs;
 }

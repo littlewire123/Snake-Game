@@ -6,13 +6,14 @@ CXX := g++
 # 定义目标文件和源文件
 TARGET := snake_server
 SOURCES := main.cpp
+LIB := -lpthread -lcrypt
 
 # 默认目标
 all: $(TARGET)
 
 # 编译目标
 $(TARGET):$(SOURCES)
-	$(CXX) $^ -lpthread -o$@
+	$(CXX) $^ $(LIB) -o $@
 
 # 清理目标
 clean:
