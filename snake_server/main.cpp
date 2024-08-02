@@ -2,9 +2,10 @@
 
 int main()
 {
+    srand(time(nullptr));
     try
     {
-        TcpServer server("0.0.0.0", 8080);
+        tcp_server server("0.0.0.0", 8080);
         if (!server.bindAndListen())
         {
             return 1;

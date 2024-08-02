@@ -43,20 +43,55 @@ struct position_t
     int32_t y;
 };
 
+//房间信息
+struct room_t
+{
+    int32_t id;     //0表示客户端创建房间，id无效，正数表示有效id
+    int32_t model;  //游戏模式0：经典模式，1：挑战模式，2：道具模式
+};
+
+//状态码
+struct status_t
+{
+    int32_t code;  //0失败，1成功
+};
+
+//用户账号密码
+struct user_info_t
+{
+	char user_name[32];
+	char user_pwd[32];
+};
+
+//文件
+struct file_t
+{
+	int file_size;    //文件字节数
+    int file_type;    //0：经典模式，1：挑战模式，2：道具模式
+	char *file;		  //文件本体
+};
+
 const static int MAP = 0;
 const static int SNAKE = 1;
 const static int FOOD = 2;
 const static int DIRECTION = 3;
 const static int ID = 4;
+const static int ROOM = 5;
+const static int STATUS = 6;
+const static int USER_INFO = 7;
+const static int GAME_FILE = 8;
 
 // Protocol 类定义
 class Protocol
 {
 public:
-    void *parse(const char *buffer, int32_t buffer_size);
+    void *parse(const char *buffer, int32_t buffer_size, int32_t *target_type, int32_t *pack_length);   //target_type为解析的包的类型
 
     template <typename T>
     char *serialize(const T &data, int32_t &data_size);
+
+    int32_t get_request_code(const char *buffer, int32_t buffer_size);
+    int get_head_info(const char *buffer, int32_t buffer_size, int32_t *data_size, int32_t *pack_num);  // 获取数据报头信息，失败返回-1，成功返回偏移量
 
 private:
     template <typename T>
@@ -68,13 +103,55 @@ private:
     char *serialize_impl(const direction_t &data, int32_t &data_size);
     char *serialize_impl(const snake_data_t &data, int32_t &data_size);
     char *serialize_impl(const int32_t &data, int32_t &data_size);
+    char *serialize_impl(const room_t &data, int32_t &data_size);
+    char *serialize_impl(const status_t &data, int32_t &data_size);
+    char *serialize_impl(const user_info_t &data, int32_t &data_size);
+    char *serialize_impl(const file_t &data, int32_t &data_size);
 
     // 解析
     map_t *parse_map(const char *data, int32_t data_size);
     snake_data_t *parse_snake_data(const char *data, int32_t data_size);
     food_t *parse_food(const char *data, int32_t data_size);
     direction_t *parse_direction(const char *data, int32_t data_size);
+    room_t *parse_room(const char *data, int32_t data_size);
+    status_t *parse_status(const char *data, int32_t data_size);
+    user_info_t *parse_user_info(const char *data, int32_t data_size);
+    file_t *parse_file(const char *data, int32_t data_size);
 };
+
+int32_t Protocol::get_request_code(const char *buffer, int32_t buffer_size)
+{
+    if (buffer_size < sizeof(int32_t))
+    {
+        return -1;
+    }
+    int32_t *code_ptr = deserialize<int32_t>(buffer, sizeof(int32_t));
+    int32_t code = (code_ptr == nullptr ? -1:*code_ptr);
+    delete code_ptr;
+    code_ptr = nullptr;
+
+    return code;
+}
+
+int Protocol::get_head_info(const char *buffer, int32_t buffer_size, int32_t *data_size, int32_t *pack_num)
+{
+    if (buffer_size < 2*sizeof(int32_t))
+    {
+        return -1;
+    }
+
+    int offset = 0;
+
+    //读数据总长
+    memcpy(data_size, buffer + offset, sizeof(int32_t));
+    offset += sizeof(int32_t);
+
+    // 读包数量
+    memcpy(pack_num, buffer + offset, sizeof(int32_t));
+    offset += sizeof(int32_t);
+
+    return offset;
+}
 
 template <typename T>
 char *Protocol::serialize(const T &data, int32_t &data_size) // 序列化的公共接口
@@ -83,20 +160,34 @@ char *Protocol::serialize(const T &data, int32_t &data_size) // 序列化的公�
 }
 
 // Protocol 类实现
-void *Protocol::parse(const char *buffer, int32_t buffer_size)
+void *Protocol::parse(const char *buffer, int32_t buffer_size, int32_t *target_type, int32_t *pack_length)
 {
-    if (buffer_size < 8)
+    if (buffer_size < sizeof(int32_t) * 2)
         return nullptr; // 至少需要8字节来读取长度和数据类型
 
-    int32_t data_length = *deserialize<int32_t>(buffer, 4);
-    int data_type = *deserialize<int>(buffer + 4, 4);
+    char ch;   //用来读包尾
+    int32_t data_length = *deserialize<int32_t>(buffer, sizeof(int32_t));
+    *target_type = *deserialize<int>(buffer + sizeof(int32_t), sizeof(int32_t));
+    printf("buffer_size : %d, data_length : %d, target_type : %d\n", buffer_size, data_length, *target_type);
 
-    if (buffer_size - 8 < data_length)
+    if (buffer_size - sizeof(int32_t) * 2 < data_length)
+    {
         return nullptr; // 检查数据长度是否匹配
+    }
 
-    const char *data = buffer + 8;
+    const char *data = buffer + 2 * sizeof(int32_t);
+    *pack_length = data_length + 2 * sizeof(int32_t) + 1;   //加一是因为包尾还有个\0
 
-    switch (data_type)
+    //检查包尾是否完整
+    memcpy(&ch, data + data_length, sizeof(char));
+
+    if (ch != '\0')
+    {
+        perror("size too short \0");
+        return nullptr;
+    }
+
+    switch (*target_type)
     {
     case MAP:
         return parse_map(data, data_length);
@@ -106,6 +197,14 @@ void *Protocol::parse(const char *buffer, int32_t buffer_size)
         return parse_food(data, data_length);
     case DIRECTION:
         return parse_direction(data, data_length);
+    case ROOM:
+        return parse_room(data, data_length);
+    case STATUS:
+        return parse_status(data, data_length);
+    case USER_INFO:
+        return parse_user_info(data, data_length);
+    case GAME_FILE:
+        return parse_file(data, data_length);
     default:
         return nullptr;
     }
@@ -116,6 +215,10 @@ template <typename T>
 T *Protocol::deserialize(const char *data, int32_t data_size)
 {
     T *value = new T;
+    if (value == nullptr)
+    {
+        return nullptr;
+    }
     memcpy(value, data, data_size);
     return value;
 }
@@ -228,14 +331,75 @@ snake_data_t *Protocol::parse_snake_data(const char *data, int32_t data_size)
     return snake;
 }
 
-food_t *Protocol::parse_food(const char *data, int32_t data_size)
+
+file_t *Protocol::parse_file(const char *data, int32_t data_size)
 {
     // 确保传入的数据大小足够
-    if (data_size < sizeof(int32_t))
+    if (data_size < sizeof(int32_t) * 2)
     {
         return nullptr;
     }
 
+    file_t *file = new file_t;
+    if (file == nullptr)
+    {
+        return nullptr;
+    }
+
+    int32_t offset = 0;
+    file->file_size = *deserialize<int32_t>(data + offset, sizeof(int32_t));
+    offset += sizeof(int32_t);
+    file->file_type = *deserialize<int32_t>(data + offset, sizeof(int32_t));
+    offset += sizeof(int32_t);
+
+    int32_t count = file->file_size;
+    int32_t expected_size = sizeof(int32_t) * 2 + count * sizeof(position_t);
+
+    // 确保数据大小匹配
+    if (data_size != expected_size)
+    {
+        delete file;
+        return nullptr;
+    }
+
+    file->file = new char[count];
+    if (file->file == nullptr)
+    {
+        delete file;
+        return nullptr;
+    }
+
+    printf("count : %d\n", count);
+
+    if (count > 0)
+    {
+        memcpy(file->file, data + offset, count * sizeof(char));
+    }
+    else
+    {
+        file->file = NULL;
+    }
+
+    return file;
+}
+
+room_t *Protocol::parse_room(const char *data, int32_t data_size)
+{
+    return deserialize<room_t>(data, data_size);
+}
+
+status_t *Protocol::parse_status(const char *data, int32_t data_size)
+{
+    return deserialize<status_t>(data, data_size);
+}
+
+user_info_t *Protocol::parse_user_info(const char *data, int32_t data_size)
+{
+    return deserialize<user_info_t>(data, data_size);
+}
+
+food_t *Protocol::parse_food(const char *data, int32_t data_size)
+{
     food_t *food = new food_t;
     if (food == nullptr)
     {
@@ -397,6 +561,95 @@ char *Protocol::serialize_impl(const direction_t &data, int32_t &data_size)
     memcpy(chs + offset, &data.move_x, sizeof(int));
     offset += sizeof(int);
     memcpy(chs + offset, &data.move_y, sizeof(int));
+
+    return chs;
+}
+
+char *Protocol::serialize_impl(const room_t &data, int32_t &data_size)
+{
+    data_size = sizeof(int) * 2 + 8;
+    int32_t cur_size = data_size - 8;
+
+    char *chs = new char[data_size];
+    if (chs == nullptr)
+    {
+        return nullptr;
+    }
+
+    int32_t offset = 0;
+    memcpy(chs + offset, &cur_size, sizeof(int32_t)); // 数据长度
+    offset += sizeof(int32_t);
+    memcpy(chs + offset, &ROOM, sizeof(int)); // 数据类型
+    offset += sizeof(int);
+    memcpy(chs + offset, &data, sizeof(room_t));
+
+    return chs;
+}
+
+char *Protocol::serialize_impl(const status_t &data, int32_t &data_size)
+{
+    data_size = sizeof(int) + 8;
+    int32_t cur_size = data_size - 8;
+
+    char *chs = new char[data_size];
+    if (chs == nullptr)
+    {
+        return nullptr;
+    }
+
+    int32_t offset = 0;
+    memcpy(chs + offset, &cur_size, sizeof(int32_t)); // 数据长度
+    offset += sizeof(int32_t);
+    memcpy(chs + offset, &STATUS, sizeof(int)); // 数据类型
+    offset += sizeof(int);
+    memcpy(chs + offset, &data, sizeof(status_t));
+
+    return chs;
+}
+
+char *Protocol::serialize_impl(const user_info_t &data, int32_t &data_size)
+{
+    data_size = sizeof(int) + 8;
+    int32_t cur_size = data_size - 8;
+
+    char *chs = new char[data_size];
+    if (chs == nullptr)
+    {
+        return nullptr;
+    }
+
+    int32_t offset = 0;
+    memcpy(chs + offset, &cur_size, sizeof(int32_t)); // 数据长度
+    offset += sizeof(int32_t);
+    memcpy(chs + offset, &USER_INFO, sizeof(int)); // 数据类型
+    offset += sizeof(int);
+    memcpy(chs + offset, &data, sizeof(user_info_t));
+
+    return chs;
+}
+
+//序列化文件
+char *Protocol::serialize_impl(const file_t &data, int32_t &data_size)
+{
+    data_size = sizeof(int32_t) + data.file_size * sizeof(char) + 2 * sizeof(int32_t);
+    int32_t cur_size = data_size - 2 * sizeof(int32_t);
+
+    char *chs = new char[data_size];
+    if (chs == nullptr)
+    {
+        return nullptr;
+    }
+
+    int32_t offset = 0;
+    memcpy(chs + offset, &cur_size, sizeof(int32_t)); // 数据长度
+    offset += sizeof(int32_t);
+    memcpy(chs + offset, &GAME_FILE, sizeof(int)); // 数据类型
+    offset += sizeof(int);
+    memcpy(chs + offset, &data.file_size, sizeof(int32_t));
+    offset += sizeof(int32_t);
+    memcpy(chs + offset, &data.file_type, sizeof(int32_t));
+    offset += sizeof(int32_t);
+    memcpy(chs + offset, data.file, data.file_size * sizeof(char));
 
     return chs;
 }
