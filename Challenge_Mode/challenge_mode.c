@@ -49,6 +49,7 @@ void challenge_mode_start(LLIST *snake_body_start, LLIST *snake_obstacle_start)
 
         if (input == 'q' || input == 'Q')
         {
+            printf("\033[?25h");
             challenge_game_stroe(snake_body_start, snake_obstacle_start);
             timeout_challenge_game(snake_body_start);
             return;
@@ -80,6 +81,7 @@ void challenge_mode_start(LLIST *snake_body_start, LLIST *snake_obstacle_start)
     }
     if (STATIC_t.game_over_flag == 0)
     {
+        printf("\033[?25h");
         challene_mode_end(snake_body_start);
     }
     return;
@@ -103,6 +105,7 @@ void continue_challenge_game(LLIST *snake_body_start, LLIST *snake_obstacle_star
 
         if (input == 'q' || input == 'Q')
         {
+            printf("\033[?25h");
             challenge_game_stroe(snake_body_start, snake_obstacle_start);
             timeout_challenge_game(snake_body_start);
             return;
@@ -134,6 +137,7 @@ void continue_challenge_game(LLIST *snake_body_start, LLIST *snake_obstacle_star
     }
     if (STATIC_t.game_over_flag == 0)
     {
+        printf("\033[?25h");
         challene_mode_end(snake_body_start);
     }
     return;

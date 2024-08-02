@@ -53,7 +53,7 @@ struct map_t *parse_map(const char *data, int data_size)
 
     if (data_size != expected_size)
     {
-        printf("data_size : %d expected_size : %d" , data_size , expected_size);
+        printf("data_size : %d expected_size : %d", data_size, expected_size);
         printf("test\n");
         free(map);
         return NULL;
@@ -160,6 +160,65 @@ struct direction_t *parse_direction(const char *data, int data_size)
     memcpy(direction, data, sizeof(struct direction_t));
 
     return direction;
+}
+
+struct room_t *parse_room(const char *data, int data_size)
+{
+    if (data_size != sizeof(struct room_t))
+        return NULL;
+    struct room_t *room = (struct room_t *)malloc(sizeof(struct room_t));
+    if (room == NULL)
+        return NULL;
+
+    memcpy(room, data, sizeof(struct room_t));
+
+    return room;
+}
+
+struct user_info_t *parse_user_info(const char *data, int data_size)
+{
+    if (data_size != sizeof(struct user_info_t))
+        return NULL;
+
+    struct user_info_t *user = (struct user_info_t *)malloc(sizeof(struct user_info_t));
+    if (user == NULL)
+        return NULL;
+
+    memcpy(user, data, data_size);
+
+    return user;
+}
+
+struct status_t *parse_status(const char *data, int data_size)
+{
+    if (data_size != sizeof(struct status_t))
+        return NULL;
+    struct status_t *status = (struct status_t *)malloc(sizeof(struct status_t));
+    if (status == NULL)
+        return NULL;
+
+    memcpy(status, data, sizeof(struct status_t));
+
+    return status;
+}
+
+struct file_t *parse_game_data(const char *data, int data_size)
+{
+    struct file_t *file = (struct file_t *)malloc(sizeof(struct file_t));
+    if (file == NULL)
+        return NULL;
+
+    int offset = 0;
+    memcpy(&file->file_size, data + offset, sizeof(int));
+    offset += sizeof(int);
+
+    memcpy(&file->file_type, data + offset, sizeof(int));
+    offset += sizeof(int);
+
+    file->file = (char *)malloc(sizeof(char) * file->file_size);
+    offset += file->file_size;
+
+    return file;
 }
 
 int parse_id(const char *data, int data_size)
@@ -270,6 +329,130 @@ char *serialize_direction(const struct direction_t *data, int *data_size)
     return chs;
 }
 
+char *serialize_room(const struct room_t *data, int *data_size)
+{
+    *data_size = sizeof(int) * 2 + 8;
+    int cur_size = *data_size - 8;
+
+    char *chs = (char *)malloc(*data_size);
+    if (chs == NULL)
+    {
+        return NULL;
+    }
+
+    int offset = 0;
+    memcpy(chs + offset, &cur_size, sizeof(int)); // 数据长度
+    offset += sizeof(int);
+    int type = ROOM;
+    memcpy(chs + offset, &type, sizeof(int)); // 数据类型
+    offset += sizeof(int);
+
+    memcpy(chs + offset, &data->id, sizeof(int));
+    offset += sizeof(int);
+    memcpy(chs + offset, &data->model, sizeof(int));
+    offset += sizeof(int);
+    return chs;
+}
+
+char *serialize_user_info(const struct user_info_t *data, int *data_size)
+{
+    *data_size = sizeof(struct user_info_t) + 8;
+    int cur_size = *data_size - 8;
+
+    char *chs = (char *)malloc(*data_size);
+    if (chs == NULL)
+    {
+        return NULL;
+    }
+
+    int offset = 0;
+    memcpy(chs + offset, &cur_size, sizeof(int)); // 数据长度
+    offset += sizeof(int);
+    int type = USER_INFO;
+    memcpy(chs + offset, &type, sizeof(int)); // 数据类型
+    offset += sizeof(int);
+
+    memcpy(chs + offset, data, sizeof(struct user_info_t));
+    offset += sizeof(struct user_info_t);
+
+    return chs;
+}
+
+char *serialize_status(const struct status_t *data, int *data_size)
+{
+    *data_size = sizeof(struct status_t) + 8;
+    int cur_size = *data_size - 8;
+
+    char *chs = (char *)malloc(*data_size);
+    if (chs == NULL)
+        return NULL;
+
+    int offset = 0;
+    memcpy(chs + offset, &cur_size, sizeof(int));
+    offset += sizeof(int);
+    int type = STATUSE;
+    memcpy(chs + offset, &type, sizeof(int));
+    offset += sizeof(int);
+
+    memcpy(chs + offset, data, sizeof(int));
+    offset += sizeof(sizeof(struct status_t));
+
+    return chs;
+}
+
+char *serlize_game_data(int *data_size, const char *path, int file_type)
+{
+    FILE *fp = fopen(path, "r");
+    if (fp == NULL)
+    {
+        return NULL;
+    }
+
+    struct file_t *file = (struct file_t *)malloc(sizeof(struct file_t));
+    if (file == NULL)
+        return NULL;
+
+    struct stat *file_info = NULL;
+    file_info = (struct stat *)malloc(sizeof(struct stat));
+    stat(path, file_info);
+
+    file->file_size = file_info->st_size;
+    file->file_type = file_type;
+
+    file->file = (char *)malloc(sizeof(char) * file->file_size);
+    if (fread(file->file, file->file_size, 1, fp) != 1)
+    {
+        return NULL;
+    }
+
+    *data_size = sizeof(int) * 2 + 8 + file->file_size;
+    int cur_size = *data_size - 8;
+
+    char *chs = (char *)malloc(sizeof(char) * (*data_size));
+    if (chs == NULL)
+        return NULL;
+
+    int offset = 0;
+    memcpy(chs + offset, &cur_size, sizeof(int));
+    offset += sizeof(int);
+
+    int type = GAME_DATA;
+    memcpy(chs + offset, &type, sizeof(int));
+    offset += sizeof(int);
+
+    memcpy(chs + offset, &file->file_size, sizeof(int));
+    offset += sizeof(int);
+
+    memcpy(chs + offset, &file->file_type, sizeof(int));
+    offset += sizeof(int);
+
+    memcpy(chs + offset, file->file, file->file_size);
+    offset += file->file_size;
+
+    fclose(fp);
+    return chs;
+}
+
 char *serialize_id(const int *data, int *data_size)
 {
     *data_size = sizeof(int) + 8;
@@ -286,6 +469,7 @@ char *serialize_id(const int *data, int *data_size)
     memcpy(chs + offset, &type, sizeof(int)); // 数据类型
     offset += sizeof(int);
     memcpy(chs + offset, data, sizeof(int));
+    offset += sizeof(int);
 
     return chs;
 }

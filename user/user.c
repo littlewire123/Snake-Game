@@ -26,16 +26,55 @@ void snake_destroy()
     {
         llist_destroy(&snake_tag_power);
     }
+    destory_online();
 }
 
 void chioce_mod()
 {
+    int mod;
+    int highlight;
+    int c;
+
     srand(time(NULL));
-    while(1)
+
+    while (1)
     {
-        print_menu();
-        int mod;
-        scanf("%d",&mod);
+        system("clear");
+        highlight = 0;
+
+        while (1)
+        {
+            system("clear");
+            print_menu(highlight);
+            c = getch();
+
+            if (c == 27)
+            {
+                getch(); // skip the [
+                c = getch();
+
+                if (c == UP_ARROW)
+                {
+                    if (highlight > 0)
+                    {
+                        --highlight;
+                    }
+                }
+                else if (c == DOWN_ARROW)
+                {
+                    if (highlight < 5)
+                    {
+                        ++highlight;
+                    }
+                }
+            }
+            else if (c == ENTER_KEY)
+            {
+                mod = highlight + 1;
+                break;
+            }
+        }
+
         switch (mod)
         {
         case 1:
@@ -48,147 +87,22 @@ void chioce_mod()
             Power_Up_mod();
             break;
         case 4:
-            if (!init_online_mode())
-            {
-                printf("online mode init failed\n");
-            }
-            else
-            {
-                start_online_game();
-            }
+            system("clear");
+            // chioce_room_mod();
+            login_online();
             break;
-        case 5:   
-            About_Game();  
-            break ;
+        case 5:
+            About_Game();
+            break;
         case 6:
-            return ;
+            system("clear");
+            return;
         default:
             break;
         }
-    }
-    return ;
-}
-
-void print_menu()
-{
-    YELLOW_TEXT();
-    printf("1 : classic_mode \n");
-    printf("2 : challenge_mode \n");
-    printf("3 : power_up_mode \n");
-    printf("4 : Online_mode\n");
-    printf("5 : About_game\n");
-    printf("6 : exit game \n");
-    printf("input your mod :");
-    RESET_TEXT();
-}
-
-void Classic_mod()
-{
-    int mod;
-    if ((snake_body_classic = init_classic_game(snake_body_classic)) == NULL)
-    {
-        snake_body_classic = snake_init_body(snake_body_classic, LENGTH);
-        start_classic_game(snake_body_classic);
-    }
-    else
-    {
-        system("clear");
-        BLUE_TEXT();
-        printf("1 : New game\n");
-        printf("2 : Continue  game\n");
-        printf("3 : Exit \n");
-        RESET_TEXT();
-        scanf("%d", &mod);
-        if (mod == 1)
-        {
-            snake_body_classic = snake_init_body(snake_body_classic, LENGTH);
-            start_classic_game(snake_body_classic);
-        }
-        else if(mod == 2)
-        {
-            continue_classic_game(snake_body_classic);
-        }
-        else
-        {
-            system("clear");
-            return ;
-        }
+        mod = 0;
     }
     return;
-}
-
-void Challenge_mod()
-{
-    int mod;
-    if ((snake_body_challenge = init_challenge_game(snake_body_challenge, &snake_obstacle_challenge)) == NULL)
-    {
-        snake_body_challenge = snake_init_body(snake_body_challenge, LENGTH);
-        snake_obstacle_challenge = init_map(snake_body_challenge, snake_obstacle_challenge);
-        challenge_mode_start(snake_body_challenge, snake_obstacle_challenge);
-    }
-    else
-    {
-        system("clear");
-        BLUE_TEXT();
-        printf("1 : New game\n");
-        printf("2 : Continue  game\n");
-        printf("3 : Exit \n");
-        RESET_TEXT();
-        scanf("%d", &mod);
-        if (mod == 1)
-        {
-            snake_body_challenge = snake_init_body(snake_body_challenge, LENGTH);
-            snake_obstacle_challenge = init_map(snake_body_challenge, snake_obstacle_challenge);
-            challenge_mode_start(snake_body_challenge, snake_obstacle_challenge);
-        }
-        else if(mod == 2)
-        {
-            continue_challenge_game(snake_body_challenge, snake_obstacle_challenge);
-        }
-        else
-        {
-            system("clear");
-            return ;
-        }
-    }
-}
-
-void Power_Up_mod()
-{
-    int mod;
-    if ((snake_body_power = init_power_game(snake_body_power, &snake_obstacle_power, &snake_tag_power)) == NULL)
-    {
-        snake_body_power = snake_init_body(snake_body_power, LENGTH);
-        snake_obstacle_power = init_map(snake_body_power, snake_obstacle_power);
-        snake_tag_power = init_tag(snake_body_power, snake_tag_power, snake_obstacle_power);
-        power_mode_start(snake_body_power, snake_obstacle_power, snake_tag_power);
-    }
-    else
-    {
-        system("clear");
-        BLUE_TEXT();
-        printf("1 : New game\n");
-        printf("2 : Continue  game\n");
-        printf("3 : Exit\n");
-        RESET_TEXT();
-        scanf("%d", &mod);
-        if (mod == 1)
-        {
-            snake_body_power = snake_init_body(snake_body_power, LENGTH);
-            snake_obstacle_power = init_map(snake_body_power, snake_obstacle_power);
-            snake_tag_power = init_tag(snake_body_power, snake_tag_power, snake_obstacle_power);
-            power_mode_start(snake_body_power, snake_obstacle_power, snake_tag_power);
-        }
-        else if(mod == 2)
-        {
-            continue_power_game(snake_body_power, snake_obstacle_power, snake_tag_power);
-        }
-        else
-        {
-            system("clear");
-            return ;
-        }
-    }
 }
 
 void About_Game()
@@ -205,9 +119,26 @@ void About_Game()
     printf("本项目遵循MIT开源协议；\n");
     printf("项目地址：https://github.com/littlewire123/Snake-Game\n\n");
 
-    printf("按任意键退出...\n");
-    getchar();
-    getchar();
+    printf("按回车键退出...\n");
+
+    while (getchar() != '\n')
+    {
+    }
+
     system("clear");
-    return ;
+    return;
+}
+
+
+void print_menu(int highlight)
+{
+    const char *menu[] = {
+        "Classic_mode",
+        "Challenge_mode",
+        "Power_up_mode",
+        "Online_mode",
+        "About_game",
+        "Exit game"};
+    int menu_size = sizeof(menu) / sizeof(menu[0]);
+    print_centered_menu(menu, menu_size, highlight);
 }

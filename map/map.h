@@ -115,4 +115,6 @@ void snake_insert_obstacle(LLIST *snake_obstacle_insert, snake_node *obstacle);
  */
 void snake_insert_tag(LLIST *snake_tag_insert, snake_node *tag);
 
+void get_terminal_size(int *rows, int *cols);
+
 #endif

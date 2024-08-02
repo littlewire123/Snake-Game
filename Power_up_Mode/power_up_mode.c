@@ -18,9 +18,9 @@ LLIST *init_power_game(LLIST *snake_body_power_init, LLIST **snake_obstacle_powe
 void power_mode_start(LLIST *snake_body_start, LLIST *snake_obstacle_start, LLIST *snake_tag_start)
 {
     set_noblock_mode(); // 函数用来设置输入不阻塞和禁用缓冲区
-    STATIC_t.speed_false = 300000;
-    STATIC_t.speed_ture = 300000;
-    lock_power = 1;
+    STATIC_t.speed_false = 300000; // 辅助蛇获取真实的速度
+    STATIC_t.speed_ture = 300000; // 蛇真实的速度
+    lock_power = 1; // 蛇速度改变的一把锁
 
     srand(time(NULL));
     char input;
@@ -37,6 +37,7 @@ void power_mode_start(LLIST *snake_body_start, LLIST *snake_obstacle_start, LLIS
 
         if (input == 'q' || input == 'Q')
         {
+            printf("\033[?25h");
             power_game_stroe(snake_body_start, snake_obstacle_start, snake_tag_start);
             timeout_power_game(snake_body_start);
             return;
@@ -68,6 +69,7 @@ void power_mode_start(LLIST *snake_body_start, LLIST *snake_obstacle_start, LLIS
     }
     if (STATIC_t.game_over_flag == 0)
     {
+        printf("\033[?25h");
         power_mode_end(snake_body_start);
     }
     return;
@@ -91,6 +93,7 @@ void continue_power_game(LLIST *snake_body_start, LLIST *snake_obstacle_start, L
 
         if (input == 'q' || input == 'Q')
         {
+            printf("\033[?25h");
             power_game_stroe(snake_body_start, snake_obstacle_start, snake_tag_start);
             timeout_power_game(snake_body_start);
             return;
@@ -122,6 +125,7 @@ void continue_power_game(LLIST *snake_body_start, LLIST *snake_obstacle_start, L
     }
     if (STATIC_t.game_over_flag == 0)
     {
+        printf("\033[?25h");
         power_mode_end(snake_body_start);
     }
     return;
@@ -161,6 +165,7 @@ void power_move_snake(LLIST *snake_body_move, LLIST *snake_obstacle_move, LLIST 
         lock_power = 1;
         STATIC_t.speed_ture = STATIC_t.speed_false;
     }
+    
     NODE *head_node = snake_body_move->head.prev;
     snake_node *temp = (snake_node *)head_node->data;
 
@@ -222,6 +227,7 @@ ERR1:
     return;
 }
 
+//道具效果
 void snake_power_mod(LLIST *snake_power_mod, LLIST *snake_obstacle_mod, LLIST *snake_tag_mod, snake_node *check_node)
 {
     int num = 0;
@@ -279,6 +285,7 @@ void snake_power_mod(LLIST *snake_power_mod, LLIST *snake_obstacle_mod, LLIST *s
     return;
 }
 
+//道具：蛇身体缩减
 void snake_del_mod(LLIST *snake_power_mod)
 {
     NODE *tail = NULL;
@@ -296,6 +303,7 @@ void snake_del_mod(LLIST *snake_power_mod)
     return;
 }
 
+//道具：蛇身体增加
 void snake_add_mod(LLIST *snake_power_mod)
 {
     NODE *tail = NULL;
@@ -319,14 +327,18 @@ void power_game_stroe(LLIST *snake_body_power, LLIST *snake_obstacle_power, LLIS
     fp = fopen(PATH_POWER, "w");
     ERRP(NULL == fp, fopen, goto ERR1);
 
+    //储存环境变量
     ERRP(fwrite(&STATIC_t, sizeof(STATIC_t), 1, fp) != 1, fwrite, goto ERR2);
 
+    //储存障碍物信息
     ERRP(fwrite(snake_obstacle_power, sizeof(*snake_obstacle_power), 1, fp) != 1, fwrite, goto ERR2);
 
     for (tail = snake_obstacle_power->head.next; tail != &snake_obstacle_power->head; tail = tail->next)
     {
         ERRP(fwrite(tail->data, snake_obstacle_power->size, 1, fp) != 1, fwrite, goto ERR2);
     }
+
+    //储存食物信息
     ERRP(fwrite(snake_tag_power, sizeof(*snake_tag_power), 1, fp) != 1, fwrite, goto ERR2);
 
     for (tail = snake_tag_power->head.next; tail != &snake_tag_power->head; tail = tail->next)
@@ -334,6 +346,7 @@ void power_game_stroe(LLIST *snake_body_power, LLIST *snake_obstacle_power, LLIS
         ERRP(fwrite(tail->data, snake_tag_power->size, 1, fp) != 1, fwrite, goto ERR2);
     }
 
+    //储存蛇身体信息
     ERRP(fwrite(snake_body_power, sizeof(*snake_body_power), 1, fp) != 1, fwrite, goto ERR2);
 
     for (tail = snake_body_power->head.next; tail != &snake_body_power->head; tail = tail->next)
@@ -359,8 +372,10 @@ LLIST *power_game_load(LLIST **snake_obstacle_power, LLIST **snake_tag_power)
     fp = fopen(PATH_POWER, "r");
     ERRP(NULL == fp, fopen, goto ERR1);
 
+    //加载 环境变量
     ERRP(fread(&STATIC_t, sizeof(STATIC_t), 1, fp) != 1, fread, goto ERR2);
 
+    //加载障碍物信息
     snake_obstacle_temp = (LLIST *)malloc(sizeof(LLIST));
     ERRP(snake_obstacle_temp == NULL, snake_obstacle_temp malloc, goto ERR2);
     ERRP(fread(snake_obstacle_temp, sizeof(*snake_obstacle_temp), 1, fp) != 1, fread, goto ERR3);
@@ -380,6 +395,7 @@ LLIST *power_game_load(LLIST **snake_obstacle_power, LLIST **snake_tag_power)
     }
     *snake_obstacle_power = snake_obstacle_temp;
 
+    //加载食物信息
     snake_tag_temp = (LLIST *)malloc(sizeof(LLIST));
     ERRP(NULL == snake_tag_temp, snake_tag_temp malloc, goto ERR4);
     ERRP(fread(snake_tag_temp, sizeof(*snake_tag_temp), 1, fp) != 1, fread, goto ERR5);
@@ -399,6 +415,7 @@ LLIST *power_game_load(LLIST **snake_obstacle_power, LLIST **snake_tag_power)
     }
     *snake_tag_power = snake_tag_temp;
 
+    //加载蛇身体信息
     snake_body_power_load = (LLIST *)malloc(sizeof(LLIST));
     ERRP(NULL == snake_body_power_load, snake_body_power_load malloc, goto ERR5);
     ERRP(fread(snake_body_power_load, sizeof(*snake_body_power_load), 1, fp) != 1, fread, goto ERR6);

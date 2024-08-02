@@ -2,8 +2,6 @@
 #define __POWER_UP_H__
 
 #include "../map/map.h"
-
-
 /**
  * @brief 开始道具模式游戏
  *
