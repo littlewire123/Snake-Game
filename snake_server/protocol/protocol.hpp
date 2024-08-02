@@ -168,7 +168,7 @@ void *Protocol::parse(const char *buffer, int32_t buffer_size, int32_t *target_t
     char ch;   //用来读包尾
     int32_t data_length = *deserialize<int32_t>(buffer, sizeof(int32_t));
     *target_type = *deserialize<int>(buffer + sizeof(int32_t), sizeof(int32_t));
-    printf("buffer_size : %d, data_length : %d\n", buffer_size, data_length);
+    printf("buffer_size : %d, data_length : %d, target_type : %d\n", buffer_size, data_length, *target_type);
 
     if (buffer_size - sizeof(int32_t) * 2 < data_length)
     {

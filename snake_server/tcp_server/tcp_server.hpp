@@ -47,6 +47,7 @@ public:
     const static int32_t DOWNLOAD_CLASSIC_SAVE_DATA = 6;
     const static int32_t DOWNLOAD_CHALLENGE_SAVE_DATA = 7;
     const static int32_t DOWNLOAD_POWER_UP_SAVE_DATA = 8;
+    const static int32_t QUIT_ROOM = 9;
 
     tcp_server(const std::string &ip, int port);
     ~tcp_server();
@@ -83,6 +84,7 @@ private:
     void download_classic_save_data(int fd, char *buffer, int32_t buffer_size);
     void download_challenge_save_data(int fd, char *buffer, int32_t buffer_size);
     void download_power_up_save_data(int fd, char *buffer, int32_t buffer_size);
+    void quit_room(int fd, char *buffer, int32_t buffer_size);
 
 private:
     int server_fd;
@@ -693,6 +695,8 @@ void tcp_server::upload_save_data(int fd, char *buffer, int32_t buffer_size)
         return;
     }
 
+    printf("data_size : %d, pack_num : %d\n", data_size, pack_num);
+
     // 读包
     int pack_length;
     int type;
@@ -794,13 +798,36 @@ void tcp_server::download_classic_save_data(int fd, char *buffer, int32_t buffer
     {
         perror("save data send error");
     }
-    
 }
 void tcp_server::download_challenge_save_data(int fd, char *buffer, int32_t buffer_size)
 {
 }
 void tcp_server::download_power_up_save_data(int fd, char *buffer, int32_t buffer_size)
 {
+}
+
+void tcp_server::quit_room(int fd, char *buffer, int32_t buffer_size)
+{
+    auto iter = connections.find(fd);
+
+    if (iter == connections.end())
+    {
+        return;
+    }
+
+    {
+        lock_guard<mutex> lock(rooms_mtx);
+        auto room = rooms.find(iter->second.room_id);
+        if (room != rooms.end())
+        {
+            room->second.close_user_connect(iter->second.id);
+            if (room->second.get_user_num() <= 0)
+            {
+                rooms.erase(room);
+            }
+        }
+    }
+    iter->second.room_id = 0;
 }
 
 void tcp_server::create_or_search_room(int fd, char *buffer, int32_t buffer_size)
@@ -1007,8 +1034,8 @@ void tcp_server::change_user_dir(int fd, char *buffer, int32_t buffer_size)
 
 void tcp_server::run()
 {
-    // thread server_status_thread(&tcp_server::server_status, this);
-    // server_status_thread.detach();
+    thread server_status_thread(&tcp_server::server_status, this);
+    server_status_thread.detach();
 
     // 开始监听连接和接收用户输入
     acceptConnections();
@@ -1130,6 +1157,10 @@ void tcp_server::handleClientData(int client_fd)
 
             case UPLOAD_SAVE_DATA:
                 upload_save_data(client_fd, recv_buff + offset, count - offset);
+                break;
+
+            case QUIT_ROOM:
+                quit_room(client_fd, recv_buff + offset, count - offset);
                 break;
 
             default:
